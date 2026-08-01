@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:card_management/core/theme/gold_theme_extension.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -16,6 +17,7 @@ import './profile_menu_section.dart';
 import './theme_mode_sheet.dart';
 import '../../../../features/backup/data_backup_service.dart';
 import '../../../../features/backup/confirm_danger_dialog.dart';
+import '../../../../screens/card_search_screen.dart';
 
 /// 个人中心快捷功能与资产工具列表。
 ///
@@ -59,6 +61,12 @@ class _ProfileMenuListState extends ConsumerState<ProfileMenuList> {
               subtitle: '从本地备份覆盖当前数据',
               divider: true,
               onTap: () => _onRestore(context),
+            ),
+            ProfileMenuItem(
+              icon: Icons.style_outlined,
+              title: 'TCGdex 卡牌查询',
+              subtitle: '在线检索宝可梦卡牌',
+              onTap: () => _onTcgdex(context),
             ),
           ],
         ),
@@ -204,6 +212,15 @@ class _ProfileMenuListState extends ConsumerState<ProfileMenuList> {
     showDialog<void>(
       context: context,
       builder: (_) => const ProfileAboutDialog(),
+    );
+  }
+
+  void _onTcgdex(BuildContext context) {
+    HapticFeedback.lightImpact();
+    Navigator.of(context).push(
+      MaterialPageRoute<CardSearchScreen>(
+        builder: (_) => const CardSearchScreen(),
+      ),
     );
   }
 

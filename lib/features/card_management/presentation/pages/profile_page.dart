@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../widgets/profile_header.dart';
 import '../widgets/profile_menu_list.dart';
+import '../widgets/network_probe_debug.dart';
 
 /// 我的 / Profile。
 ///
@@ -35,6 +36,7 @@ class ProfilePage extends ConsumerWidget {
           ProfileHeader(),
           SizedBox(height: 16),
           ProfileMenuList(),
+          NetworkProbeDebug(),
         ],
       ),
     );
