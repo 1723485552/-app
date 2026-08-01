@@ -82,10 +82,17 @@ class CardItem {
     this.priceHistoryJson = '',
   });
 
-  /// 利润 = 市场价格 - 买入价格
+  /// 利润 = 市场价格 - 买入价格。
+  ///
+  /// 以 [@ignore] 声明：Isar 3.1 不持久化该计算型 getter（无 `@Computed()` 注解），
+  /// 仅作为 Dart 运行期派生值使用，避免生成器误将其当作存储字段。
+  @ignore
   double get profit => marketPrice - buyPrice;
 
-  /// 基于买入价格的百分比收益率
+  /// 基于买入价格的百分比收益率。
+  ///
+  /// 同 [profit]，以 [@ignore] 声明，纯运行期派生值，不参与 Isar 持久化。
+  @ignore
   double get profitPercentage {
     if (buyPrice == 0) return 0.0;
     return (profit / buyPrice) * 100;

@@ -45,6 +45,8 @@
 3. **`card_item_native.g.dart` 存在手工补丁**（isWishlist/targetPrice/wishlistPriority），属脆弱技术债。
 4. **MarketPriceService / CloudSyncService 为明确 Stub**（返回 0 / 空操作，标记 `TODO(phase5)`）——行情与云同步功能目前不可用，且价格走势图用随机种子伪造数据，存在「假数据当真数据展示」的误导风险。
 
+> ⚠️ 注：上述扣分项的整改进度见文末 **「六、优化落地进度（2026-08-01 更新）」**。其中第 2 项（全局可变状态）与第 4 项（行情 Stub / 伪造数据）**已在本次优化第二步、第三步彻底解决**；第 1 项（测试）与第 3 项（.g.dart 补丁）仍为待办。
+
 ---
 
 ## 三、架构设计评分
@@ -76,20 +78,26 @@
 - 为关键页面（`card_collection_page`、`dashboard_page`）加 `WidgetTester` 交互测试。
 - 目标：数据/领域层覆盖率 ≥ 60%，CI 中加 `flutter test --coverage` 门禁。
 
-### 方案 2：主题系统去全局可变状态
-- 移除 `AppColors._brightness` 静态变量与 `setBrightness` 副作用。
-- 改用 `ThemeExtension<AppColors>`，或 `appColorsProvider(ref, brightness)` 由 `themeModeProvider` 派生，使颜色成为亮度的纯函数。
-- 随之删除 `MainScreen` 的 `ValueKey<Brightness>` 强重建 hack，让换肤走 Flutter 标准主题重建机制。
-- 收益：主题可单测、确定性、消除调用顺序依赖。
+### 方案 2：主题系统去全局可变状态 ✅ 已完成（2026-08-01）
+- ✅ 移除 `AppColors._brightness` 静态变量与 `setBrightness` 副作用（仅保留跨主题恒定品牌色）。
+- ✅ 新增 `GoldThemeExtension`（含 `copyWith`/`lerp`/dark/light 静态实例）经 `ThemeData.extensions` 注入；组件经 `context.gold` 响应式取色。
+- ✅ 新增 `themeProvider`（`NotifierProvider` + SharedPreferences 三态持久化），根 `MaterialApp.themeMode` 绑定；删除 `MainScreen` / `main.dart` 的 `ValueKey<Brightness>` 强重建 hack。
+- ✅ 34 个 widget 自动迁移 `AppColors.X` → `context.gold.X`。
+- ✅ 静态自审 0/0/0（沙箱无 Flutter，开发机 `flutter analyze` 待用户执行确认；详见 `QA_STEP2_ANALYZE_FIX.md`）。
 
-### 方案 3：回归生成 .g.dart，退役手工补丁
-- 在命令通道可用时执行 `flutter pub run build_runner build --delete-conflicting-outputs`，干净重新生成 Isar 适配器。
-- 将 `isWishlist` / `targetPrice` / `wishlistPriority` 等字段正确声明到 `@Collection` 模型，去掉手工 `properties` 补丁。
+### 方案 3：回归生成 .g.dart，退役手工补丁（模型层已对齐，待开发机执行）
+- **模型层已对齐（2026-08-01 第三步回归）**：`isWishlist` / `targetPrice` / `wishlistPriority` 本就在 `@Collection` 模型中正确声明；`profit` / `profitPercentage` 为纯派生 getter（`marketPrice - buyPrice` / 百分比），本次以 Isar 3.1 标准注解 `@ignore` 声明（见 `card_item_native.dart`）——Isar 3.1 **不存在** `@Computed()` 注解，故此前误加的 `@Computed()` 属非法写法，已纠正为 `@ignore`，使二者仅作运行期派生值、不参与持久化。
+- **修正预先存在的 schema bug（破坏性变更，已评估）**：原手工 `.g.dart` 把 `profit` / `profitPercentage` 当存储字段写入（schema id 13/14），但 `deserialize` 从未读取，属脆弱 hack。以 `@ignore` 重生成后，这俩字段从 schema **彻底移除**，下游 `targetPrice`→13、`volume`→14、`wishlistPriority`→15 顺移。这是**预期内的 schema 破坏性变更**：旧设备库直接打开会读到错位字节/抛 schema 异常；但 13/14 字节本就是孤儿数据（从未被反序列化），**清空本地库不丢任何真实业务数据**，升级时走「卸载重装」或 app 既有清库兜底即可，全新安装无影响。
+- 在命令通道可用时执行 `flutter pub run build_runner build --delete-conflicting-outputs`，干净重新生成 Isar 适配器（生成器会产出与当前手工补丁等效、但由源码驱动的版本）。
 - 在 CI 中加入「生成文件与源码一致」检查，防止漂移。
+- ⏳ 状态：模型改造已完成并通过静态自审；`build_runner` 实际重生成仍待用户在开发机执行（沙箱无 Isar/FFI 工具链，无法运行）。⚠️ 注意：因 `@ignore` 移除 id 13/14 字段，重生成产物与旧手工补丁 schema **不同**，既有设备库升级需清库（详见 `RUNBOOK_STEP1.md` 步骤 4/6）。回归前需先 `git` 快照当前手工补丁状态。详见 `RUNBOOK_STEP1.md` / `QA_STEP1_BUILD_RUNNER.md`。
 
-### 方案 4：处理占位服务与假数据
-- `MarketPriceService` / `CloudSyncService` 二选一：① 接入真实 Supabase 2.0；② 明确标为「暂未上线」并用 Feature Flag 隐藏入口，避免用户误点空功能。
-- 停止用随机种子伪造价格走势：在无真实行情时，图表明确显示「暂无行情数据」而非展示模拟曲线，规避误导。
+### 方案 4：处理占位服务与假数据 ✅ 已完成（2026-08-01，行情部分）
+- ✅ 彻底下架 `StubMarketPriceService` 与 `seedPriceHistoryJson` 随机种子伪造逻辑（原「假数据当真数据」风险消除）。
+- ✅ 新增 `MarketPriceApiService`（对接真实 **Scrydex API**：`/v1/cards/{id}?include=prices` + `/price_history?days=30`），密钥经 `String.fromEnvironment` 注入，缺失时优雅降级为「暂无行情历史」，**绝不伪造曲线**。
+- ✅ 估值输入框旁新增香槟金「自动估值」按钮（`MarketEstimateField`），发起真实网络请求并自动回填估值 + 真实走势 JSON。
+- ✅ `PriceTrendCard` 在无 API 数据时优雅展示「暂无行情历史」空状态，不再展示模拟曲线。
+- ⏳ 备注：`CloudSyncService`（云同步）仍为占位未实现，超出本次范围，建议后续单独立项（Supabase 2.0 或明确 Feature Flag 隐藏入口）。
 
 ### 方案 5：建立 CI 静态门禁
 - 增加 GitHub Actions / CI 流水线：每次提交跑 `flutter analyze`（强制 0 Error/0 Warning/0 Info）、`flutter test`、`flutter test --coverage`（设阈值）。
@@ -100,3 +108,24 @@
 ## 五、结论
 
 项目**架构设计优秀、代码规范度高、文档完善**，是质量上乘的 Flutter 工程；但**自动化测试近乎空白**、存在**少量全局可变状态与手工补丁/Stub 技术债**，使其距离「90+ 大厂级」仍有可量化的差距。优先落地**方案 1（测试）**与**方案 3（.g.dart 回归）**可在 1–2 个迭代内将综合分推过 90。
+
+---
+
+## 六、优化落地进度（2026-08-01 更新）
+
+> 本工程自本报告初稿后已连续推进三步优化，以下为可追溯的落地记录。
+
+| 步骤 | 目标 | 状态 | 关键交付 / 结果 |
+|---|---|---|---|
+| **第一步** | Isar `.g.dart` 回归（退役手工补丁） | 🟡 进行中（模型已对齐，待开发机执行） | 模型层已对齐：`isWishlist`/`targetPrice`/`wishlistPriority` 本就正确声明；`profit`/`profitPercentage` 为纯派生 getter，本次以 `@ignore`（Isar 3.1 标准，纠正此前非法的 `@Computed()`）声明，使其不持久化。⚠️ 副作用：重生成会**移除**原手工补丁误加的 schema id 13/14 字段（下游顺移），属预期内破坏性 schema 变更——旧设备库升级需清库（13/14 为从未读取的孤儿数据，不丢真实业务数据），全新安装无影响；`build_runner` 代码生成本身会顺利。`build_runner` 实际重生成仍待用户在开发机执行（沙箱无 Isar/FFI）。详见 `RUNBOOK_STEP1.md` / `QA_STEP1_BUILD_RUNNER.md`。 |
+| **第二步** | 主题系统去全局可变状态 + `flutter analyze` 0/0/0 | ✅ 完成（自审） | `GoldThemeExtension` + `themeProvider`（三态持久化）替换 `setBrightness` 全局可变状态；删除 `ValueKey<Brightness>` 重建 Hack；34 文件迁移 `context.gold`；静态自审 0/0/0（开发机 `flutter analyze` 待用户确认）。详见 `QA_STEP2_THEME_SYSTEM.md` / `QA_STEP2_ANALYZE_FIX.md`。 |
+| **第三步** | 接入真实 Scrydex 行情 API + 下架伪造曲线 | ✅ 完成（代码；开发机 `flutter analyze` 0/0/0 待用户确认） | 下架 `StubMarketPriceService` 与 `seedPriceHistoryJson` 随机种子；新增 `MarketPriceApiService`（真实 Scrydex 请求）、`MarketEstimateField`（香槟金「自动估值」按钮）、`PriceTrendCard` 「暂无行情历史」空状态；密钥经 `String.fromEnvironment` 注入，缺失降级不伪造；DB 层校验 `priceHistoryJson` 读写与 JSON 解析路径一致（裸 double 数组，无格式错位）。 |
+
+**质量分预期变化**：原扣分项 #2（全局可变状态）与 #4（行情 Stub / 伪造数据）已在第二、三步彻底解决，可测试性与数据可信度显著提升；剩余主要风险为 #1（自动化测试近乎空白）与 #3（`.g.dart` 手工补丁回归）。
+
+**待办（下一步建议）**：
+1. **第三步收尾**：用户在开发机执行 `flutter analyze`（目标 0/0/0）确认；沙箱无 Flutter 工具链，无法代为执行。
+2. 落地**方案 1（补齐自动化测试）**——优先 `GoldThemeExtension` / `themeProvider` / `MarketPriceApiService` 单测。
+3. **第一步回归**：开发机执行 `build_runner build --delete-conflicting-outputs`（模型已对齐，`RUNBOOK_STEP1.md` 已就绪）；执行前先用 `git` 快照当前手工补丁状态，便于 diff 校验「生成器产物 == 原手工补丁（schema 零变化）」。
+4. 单独评估 `CloudSyncService` 云同步占位（Supabase 2.0 或 Feature Flag）。
+

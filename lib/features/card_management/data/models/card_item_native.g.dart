@@ -84,28 +84,18 @@ const CardItemSchema = CollectionSchema(
       name: r'priceHistoryJson',
       type: IsarType.string,
     ),
-    r'profit': PropertySchema(
-      id: 13,
-      name: r'profit',
-      type: IsarType.double,
-    ),
-    r'profitPercentage': PropertySchema(
-      id: 14,
-      name: r'profitPercentage',
-      type: IsarType.double,
-    ),
     r'targetPrice': PropertySchema(
-      id: 15,
+      id: 13,
       name: r'targetPrice',
       type: IsarType.double,
     ),
     r'volume': PropertySchema(
-      id: 16,
+      id: 14,
       name: r'volume',
       type: IsarType.double,
     ),
     r'wishlistPriority': PropertySchema(
-      id: 17,
+      id: 15,
       name: r'wishlistPriority',
       type: IsarType.long,
     )
@@ -164,11 +154,9 @@ void _cardItemSerialize(
   writer.writeBool(offsets[10], object.isWishlist);
   writer.writeDouble(offsets[11], object.marketPrice);
   writer.writeString(offsets[12], object.priceHistoryJson);
-  writer.writeDouble(offsets[13], object.profit);
-  writer.writeDouble(offsets[14], object.profitPercentage);
-  writer.writeDouble(offsets[15], object.targetPrice);
-  writer.writeDouble(offsets[16], object.volume);
-  writer.writeLong(offsets[17], object.wishlistPriority);
+  writer.writeDouble(offsets[13], object.targetPrice);
+  writer.writeDouble(offsets[14], object.volume);
+  writer.writeLong(offsets[15], object.wishlistPriority);
 }
 
 CardItem _cardItemDeserialize(
@@ -195,9 +183,9 @@ CardItem _cardItemDeserialize(
     isWishlist: reader.readBoolOrNull(offsets[10]) ?? false,
     marketPrice: reader.readDouble(offsets[11]),
     priceHistoryJson: reader.readStringOrNull(offsets[12]) ?? '',
-    targetPrice: reader.readDoubleOrNull(offsets[15]),
-    volume: reader.readDoubleOrNull(offsets[16]) ?? 0.0,
-    wishlistPriority: reader.readLongOrNull(offsets[17]) ?? 0,
+    targetPrice: reader.readDoubleOrNull(offsets[13]),
+    volume: reader.readDoubleOrNull(offsets[14]) ?? 0.0,
+    wishlistPriority: reader.readLongOrNull(offsets[15]) ?? 0,
   );
   object.id = id;
   return object;
@@ -239,14 +227,10 @@ P _cardItemDeserializeProp<P>(
     case 12:
       return (reader.readStringOrNull(offset) ?? '') as P;
     case 13:
-      return (reader.readDouble(offset)) as P;
-    case 14:
-      return (reader.readDouble(offset)) as P;
-    case 15:
       return (reader.readDoubleOrNull(offset)) as P;
-    case 16:
+    case 14:
       return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
-    case 17:
+    case 15:
       return (reader.readLongOrNull(offset) ?? 0) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1633,134 +1617,6 @@ extension CardItemQueryFilter
     });
   }
 
-  QueryBuilder<CardItem, CardItem, QAfterFilterCondition> profitEqualTo(
-    double value, {
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'profit',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<CardItem, CardItem, QAfterFilterCondition> profitGreaterThan(
-    double value, {
-    bool include = false,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'profit',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<CardItem, CardItem, QAfterFilterCondition> profitLessThan(
-    double value, {
-    bool include = false,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'profit',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<CardItem, CardItem, QAfterFilterCondition> profitBetween(
-    double lower,
-    double upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'profit',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<CardItem, CardItem, QAfterFilterCondition>
-      profitPercentageEqualTo(
-    double value, {
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'profitPercentage',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<CardItem, CardItem, QAfterFilterCondition>
-      profitPercentageGreaterThan(
-    double value, {
-    bool include = false,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'profitPercentage',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<CardItem, CardItem, QAfterFilterCondition>
-      profitPercentageLessThan(
-    double value, {
-    bool include = false,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'profitPercentage',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<CardItem, CardItem, QAfterFilterCondition>
-      profitPercentageBetween(
-    double lower,
-    double upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'profitPercentage',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
   QueryBuilder<CardItem, CardItem, QAfterFilterCondition> targetPriceIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -2123,30 +1979,6 @@ extension CardItemQuerySortBy on QueryBuilder<CardItem, CardItem, QSortBy> {
     });
   }
 
-  QueryBuilder<CardItem, CardItem, QAfterSortBy> sortByProfit() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'profit', Sort.asc);
-    });
-  }
-
-  QueryBuilder<CardItem, CardItem, QAfterSortBy> sortByProfitDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'profit', Sort.desc);
-    });
-  }
-
-  QueryBuilder<CardItem, CardItem, QAfterSortBy> sortByProfitPercentage() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'profitPercentage', Sort.asc);
-    });
-  }
-
-  QueryBuilder<CardItem, CardItem, QAfterSortBy> sortByProfitPercentageDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'profitPercentage', Sort.desc);
-    });
-  }
-
   QueryBuilder<CardItem, CardItem, QAfterSortBy> sortByTargetPrice() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'targetPrice', Sort.asc);
@@ -2354,30 +2186,6 @@ extension CardItemQuerySortThenBy
     });
   }
 
-  QueryBuilder<CardItem, CardItem, QAfterSortBy> thenByProfit() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'profit', Sort.asc);
-    });
-  }
-
-  QueryBuilder<CardItem, CardItem, QAfterSortBy> thenByProfitDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'profit', Sort.desc);
-    });
-  }
-
-  QueryBuilder<CardItem, CardItem, QAfterSortBy> thenByProfitPercentage() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'profitPercentage', Sort.asc);
-    });
-  }
-
-  QueryBuilder<CardItem, CardItem, QAfterSortBy> thenByProfitPercentageDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'profitPercentage', Sort.desc);
-    });
-  }
-
   QueryBuilder<CardItem, CardItem, QAfterSortBy> thenByTargetPrice() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'targetPrice', Sort.asc);
@@ -2503,18 +2311,6 @@ extension CardItemQueryWhereDistinct
     });
   }
 
-  QueryBuilder<CardItem, CardItem, QDistinct> distinctByProfit() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'profit');
-    });
-  }
-
-  QueryBuilder<CardItem, CardItem, QDistinct> distinctByProfitPercentage() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'profitPercentage');
-    });
-  }
-
   QueryBuilder<CardItem, CardItem, QDistinct> distinctByTargetPrice() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'targetPrice');
@@ -2617,18 +2413,6 @@ extension CardItemQueryProperty
   QueryBuilder<CardItem, String, QQueryOperations> priceHistoryJsonProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'priceHistoryJson');
-    });
-  }
-
-  QueryBuilder<CardItem, double, QQueryOperations> profitProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'profit');
-    });
-  }
-
-  QueryBuilder<CardItem, double, QQueryOperations> profitPercentageProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'profitPercentage');
     });
   }
 

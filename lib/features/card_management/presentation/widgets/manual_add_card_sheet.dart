@@ -7,7 +7,7 @@ import '../../domain/repositories/card_repository.dart';
 import '../../data/models/card_item.dart';
 import '../../domain/enums/card_category.dart';
 import '../../domain/enums/grading_company.dart';
-import '../../domain/services/market_price_service.dart';
+import '../widgets/market_estimate_field.dart';
 import '../helpers/card_meta.dart';
 import '../providers/card_providers.dart';
 import 'card_cover_picker.dart';
@@ -54,6 +54,7 @@ class _ManualAddFormState extends ConsumerState<ManualAddForm> {
   bool _saving = false;
   bool _saved = false;
   String? _imagePath;
+  String _priceHistoryJson = '';
   final Set<String> _aiFields = <String>{};
   @override
   void initState() {
@@ -69,6 +70,7 @@ class _ManualAddFormState extends ConsumerState<ManualAddForm> {
       _buy.text = c.buyPrice.toString();
       _market.text = c.marketPrice.toString();
       _imagePath = c.imageUrl;
+      _priceHistoryJson = c.priceHistoryJson;
       return;
     }
     final ManualAddPrefill? p = widget.prefill;
@@ -137,7 +139,7 @@ class _ManualAddFormState extends ConsumerState<ManualAddForm> {
             _grading == GradingCompany.raw ? null : double.tryParse(_score.text),
         buyPrice: double.tryParse(_buy.text) ?? 0.0,
         marketPrice: market,
-        priceHistoryJson: seedPriceHistoryJson(market),
+        priceHistoryJson: _priceHistoryJson,
         buyDate: DateTime.now(),
         isCollected: true,
         volume: 0.0,
@@ -221,7 +223,13 @@ class _ManualAddFormState extends ConsumerState<ManualAddForm> {
       _dropdown<GradingCompany>('评级机构', _grading, GradingCompany.values, cardGradingLabel, (GradingCompany? v) => setState(() => _grading = v!)),
       if (_grading != GradingCompany.raw) _field('评级分数', _score, hint: '如 10 / 9.5', numeric: true),
       _field('买入成本 (¥)', _buy, hint: '0', numeric: true, required: true),
-      _field('当前估值 (¥)', _market, hint: '0.0 (选填，默认 0)', numeric: true),
+      MarketEstimateField(
+        marketController: _market,
+        nameController: _name,
+        numberController: _number,
+        category: _category,
+        onHistoryFetched: (String h) => setState(() => _priceHistoryJson = h),
+      ),
       const SizedBox(height: 20),
       SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _saving ? null : _submit, style: ElevatedButton.styleFrom(backgroundColor: AppColors.goldPrimary, foregroundColor: context.gold.bgPure, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), elevation: 0), child: _saving ? SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: context.gold.bgPure)) : const Text('确认入库', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)))),
     ],

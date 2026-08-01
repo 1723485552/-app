@@ -1,6 +1,14 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../domain/enums/card_category.dart';
 
-import 'market_price_api_service.dart';
+/// 单卡实时行情报价（真实 API 来源）。
+///
+/// [priceCny] 最新市场价（已折算人民币）；[historyJson] 近 30 日真实价格序列的
+/// JSON 数组字符串，无数据时为 ''。
+class MarketQuote {
+  const MarketQuote({required this.priceCny, required this.historyJson});
+  final double priceCny;
+  final String historyJson;
+}
 
 /// 行情价格服务抽象（领域层契约）。
 ///
@@ -15,7 +23,3 @@ abstract class MarketPriceService {
   Future<MarketQuote?> fetchQuote(String cardName, String cardNo,
       {CardCategory? category});
 }
-
-/// 行情服务 Provider：注入真实 Scrydex 实现（原 Stub 已下架）。
-final Provider<MarketPriceService> marketPriceServiceProvider =
-    Provider<MarketPriceService>((ref) => MarketPriceApiService());

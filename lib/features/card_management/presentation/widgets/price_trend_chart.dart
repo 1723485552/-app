@@ -44,7 +44,21 @@ class PriceTrendCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<double> history = parsePriceHistory(priceHistoryJson);
-    if (history.isEmpty) return const SizedBox.shrink();
+    if (history.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: <Widget>[
+            Icon(Icons.show_chart_outlined,
+                size: 18, color: context.gold.textInactive),
+            const SizedBox(width: 8),
+            Text('暂无行情历史',
+                style: TextStyle(
+                    color: context.gold.textInactive, fontSize: 12)),
+          ],
+        ),
+      );
+    }
     final double first = history.first;
     final double last = history.last;
     final bool up = last >= first;

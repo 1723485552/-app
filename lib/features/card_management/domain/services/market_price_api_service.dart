@@ -4,9 +4,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/config/scrydex_config.dart';
+import '../../../../core/config/scrydex_config.dart';
 import '../../domain/enums/card_category.dart';
 import 'market_price_service.dart';
+
+export 'market_price_service.dart';
 
 /// 真实行情服务：对接 Scrydex API，替换原 Stub / 随机种子伪造实现。
 ///
@@ -147,3 +149,7 @@ class MarketPriceApiService implements MarketPriceService {
     return out;
   }
 }
+
+/// 行情服务 Provider：注入真实 Scrydex 实现（原 Stub 已下架）。
+final Provider<MarketPriceService> marketPriceServiceProvider =
+    Provider<MarketPriceService>((ref) => MarketPriceApiService());
