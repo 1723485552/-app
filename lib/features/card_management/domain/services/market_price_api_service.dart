@@ -13,20 +13,33 @@ export 'market_price_service.dart';
 /// 真实行情服务：对接 Scrydex API，替换原 Stub / 随机种子伪造实现。
 ///
 /// 任意网络 / 解析异常均以 `null` 优雅返回（绝不抛崩溃），由上游 UI 展示
-/// 「暂无行情历史」空状态，规避伪造曲线误导决策。
+/// 「暂无行情历史」空状态，规避伪造曲线误导性决策。
 ///
 /// 请求链路：解析卡牌 id（直查 → 按名搜索回退）→ 取最新市场价 →
 /// 拉取近 30 日真实价格历史；全部经 [scrydexBaseUrl] 统一基址与双 Header 鉴权。
+///
+/// 密钥与 [http.Client] 可经构造参数注入（默认取编译期 [scrydexApiKey] /
+/// [scrydexTeamId] 与默认 [http.Client]），便于单元测试在不依赖
+/// 编译期 `--dart-define` 的情况下覆盖「密钥缺失 / 网络异常 / 解析失败」
+/// 三类优雅降级路径，生产行为保持完全不变。
 class MarketPriceApiService implements MarketPriceService {
-  MarketPriceApiService({http.Client? client}) : _client = client ?? http.Client();
+  MarketPriceApiService({
+    http.Client? client,
+    String? apiKey,
+    String? teamId,
+  })  : _client = client ?? http.Client(),
+        _apiKey = apiKey ?? scrydexApiKey,
+        _teamId = teamId ?? scrydexTeamId;
   final http.Client _client;
+  final String _apiKey;
+  final String _teamId;
 
   static const Duration _timeout = Duration(seconds: 8);
 
   Map<String, String> get _headers => <String, String>{
         'Content-Type': 'application/json',
-        if (scrydexApiKey.isNotEmpty) 'X-Api-Key': scrydexApiKey,
-        if (scrydexTeamId.isNotEmpty) 'X-Team-ID': scrydexTeamId,
+        if (_apiKey.isNotEmpty) 'X-Api-Key': _apiKey,
+        if (_teamId.isNotEmpty) 'X-Team-ID': _teamId,
       };
 
   @override
@@ -39,7 +52,7 @@ class MarketPriceApiService implements MarketPriceService {
   Future<MarketQuote?> fetchQuote(String cardName, String cardNo,
       {CardCategory? category}) async {
     // 无密钥则优雅降级，避免伪造数据。
-    if (scrydexApiKey.isEmpty || scrydexTeamId.isEmpty) return null;
+    if (_apiKey.isEmpty || _teamId.isEmpty) return null;
     final String game = _gameFor(category);
     final String id = _deriveId(cardNo);
     try {
