@@ -61,7 +61,6 @@ void main() {
 
     test('整型 / 数字统一 toDouble', () {
       final List<double> r = parsePriceHistory('[1, 2, 3]');
-      expect(r.every((double e) => e is double), isTrue);
       expect(r, <double>[1, 2, 3]);
     });
 

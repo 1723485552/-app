@@ -13,7 +13,7 @@ void main() {
     expect(find.byType(MaterialApp), findsOneWidget);
     expect(find.text('首页'), findsOneWidget);
     expect(find.text('攒卡'), findsOneWidget);
-    expect(find.text('行情'), findsOneWidget);
+    expect(find.text('账单'), findsOneWidget);
     expect(find.text('我的'), findsOneWidget);
   });
 }

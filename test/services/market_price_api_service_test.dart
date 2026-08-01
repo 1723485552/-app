@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 import 'package:card_management/features/card_management/domain/services/market_price_api_service.dart';
-import 'package:card_management/features/card_management/domain/services/market_price_service.dart';
 
 /// 根据 URL 返回模拟 Scrydex 响应的 MockClient。
 /// - 搜索接口 `/cards?q=`：返回含一条带价格的卡（验证直查回退链路）。

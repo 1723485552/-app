@@ -13,8 +13,8 @@ void main() {
     });
 
     test('copyWith 仅覆盖传入字段，其余保持原值', () {
-      final GoldThemeExtension base = GoldThemeExtension.dark;
-      final Color overridden = const Color(0xFFFF0000);
+      const GoldThemeExtension base = GoldThemeExtension.dark;
+      const Color overridden = Color(0xFFFF0000);
       final GoldThemeExtension next = base.copyWith(goldPrimary: overridden);
       expect(next.goldPrimary, overridden);
       expect(next.bgDark, base.bgDark);
@@ -22,8 +22,8 @@ void main() {
     });
 
     test('lerp t=0/t=1 收敛于端点，t=0.5 处于中间', () {
-      final GoldThemeExtension a = GoldThemeExtension.dark;
-      final GoldThemeExtension b = GoldThemeExtension.light;
+      const GoldThemeExtension a = GoldThemeExtension.dark;
+      const GoldThemeExtension b = GoldThemeExtension.light;
       expect(a.lerp(b, 0).bgDark, a.bgDark);
       expect(a.lerp(b, 1).bgDark, b.bgDark);
       final GoldThemeExtension mid = a.lerp(b, 0.5);
@@ -32,7 +32,7 @@ void main() {
     });
 
     test('lerp 对 null other 安全返回 this', () {
-      final GoldThemeExtension a = GoldThemeExtension.dark;
+      const GoldThemeExtension a = GoldThemeExtension.dark;
       expect(a.lerp(null, 0.5), same(a));
     });
   });
@@ -45,7 +45,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData(
-            extensions: <ThemeExtension<dynamic>>[GoldThemeExtension.dark],
+            extensions: const <ThemeExtension<dynamic>>[GoldThemeExtension.dark],
           ),
           home: Builder(
             builder: (BuildContext context) {
