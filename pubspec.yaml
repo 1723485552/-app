@@ -1,0 +1,38 @@
+name: card_management
+description: 卡牌资产（Card Collector）大厂级黑金管理应用
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  isar: 3.1.0+1
+  isar_flutter_libs: 3.1.0+1
+  path_provider: 2.1.6
+  flutter_riverpod: 2.6.1
+  http: ^1.2.0
+  fl_chart: 0.68.0
+  equatable: 2.1.0
+  json_annotation: 4.12.0
+  image_picker: ^1.1.2
+  google_mlkit_text_recognition: ^0.13.0
+  file_picker: ^11.0.2
+  share_plus: ^12.0.2
+  image: ^4.9.1
+  cross_file: ^0.3.5+4
+  shared_preferences: ^2.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: 3.0.2
+  build_runner: 2.4.13
+  isar_generator: 3.1.0+1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/app_logo.png
