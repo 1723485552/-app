@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/image_optimizer.dart';
+import '../../../../core/widgets/hd_image_actions.dart';
+import '../../../../core/widgets/hd_image_viewer.dart';
 import '../helpers/card_image.dart';
 
 /// 黑金封面图选择区块（手动录入 / 心愿单共用）。
@@ -80,14 +82,24 @@ class _CardCoverPickerState extends State<CardCoverPicker> {
                   children: <Widget>[
                     ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: Image(
-                        image: cardImageProvider(_path!),
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: 120,
-                        errorBuilder: (_, __, ___) => const Icon(
-                            Icons.add_a_photo_outlined,
-                            color: AppColors.goldPrimary),
+                      child: GestureDetector(
+                        onTap: () => showHdImage(
+                              context,
+                              _path!,
+                              actions: <HdImageAction>[
+                                hdShareAction(context, _path!),
+                                hdSaveAction(context, _path!),
+                              ],
+                            ),
+                        child: Image(
+                          image: cardImageProvider(_path!),
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          height: 120,
+                          errorBuilder: (_, __, ___) => const Icon(
+                              Icons.add_a_photo_outlined,
+                              color: AppColors.goldPrimary),
+                        ),
                       ),
                     ),
                     Positioned(

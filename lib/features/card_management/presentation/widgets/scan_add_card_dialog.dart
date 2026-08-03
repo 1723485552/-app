@@ -7,6 +7,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../data/services/card_ocr_service.dart';
 import '../../domain/enums/card_category.dart';
 import '../../domain/enums/grading_company.dart';
+import '../../../../core/widgets/hd_image_actions.dart';
+import '../../../../core/widgets/hd_image_viewer.dart';
 import '../helpers/card_image.dart';
 import '../helpers/card_meta.dart';
 import 'manual_add_card_sheet.dart';
@@ -124,7 +126,24 @@ class _ScanDialogState extends State<_ScanDialog>
             Container(width: size, height: size, decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.goldPrimary.withValues(alpha: 0.2), width: 0.5), color: context.gold.bgPure.withValues(alpha: 0.4))),
             _corner(top: 0, left: 0), _corner(top: 0, right: 0), _corner(bottom: 0, left: 0), _corner(bottom: 0, right: 0),
             if (_ocr != null && !_done)
-              Positioned.fill(child: ClipRRect(borderRadius: BorderRadius.circular(12), child: Image(image: cardImageProvider(_ocr!.imagePath), fit: BoxFit.cover))),
+              Positioned.fill(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: GestureDetector(
+                    onTap: () => showHdImage(
+                          context,
+                          _ocr!.imagePath,
+                          actions: <HdImageAction>[
+                            hdShareAction(context, _ocr!.imagePath),
+                            hdSaveAction(context, _ocr!.imagePath),
+                          ],
+                        ),
+                    child: Image(
+                        image: cardImageProvider(_ocr!.imagePath),
+                        fit: BoxFit.cover),
+                  ),
+                ),
+              ),
             if (_busy || (!_done && _mode == 1))
               AnimatedBuilder(animation: _anim, builder: (_, __) => Positioned(top: _anim.value * size, left: 10, right: 10, child: Container(height: 2, decoration: const BoxDecoration(color: AppColors.goldPrimary, boxShadow: <BoxShadow>[BoxShadow(color: AppColors.goldGlow, blurRadius: 12, spreadRadius: 1)])))),
             if (_busy) const Center(child: CircularProgressIndicator(color: AppColors.goldPrimary, strokeWidth: 2)),

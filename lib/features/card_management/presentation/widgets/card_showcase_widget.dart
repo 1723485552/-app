@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:card_management/core/theme/gold_theme_extension.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -11,7 +10,7 @@ import '../../domain/enums/currency_unit.dart';
 import '../providers/card_providers.dart';
 import '../providers/profile_providers.dart';
 import 'card_cover_image.dart';
-import 'card_detail_lightbox.dart';
+import 'card_detail_modal.dart';
 import 'manual_add_card_sheet.dart';
 
 /// 首页「黑金展柜」：横向展示估值 Top-3 卡牌，香槟金辉光边框。
@@ -62,7 +61,7 @@ class CardShowcaseWidget extends ConsumerWidget {
                 separatorBuilder: (_, __) => const SizedBox(width: 12),
                 itemCount: top.length,
                 itemBuilder: (BuildContext ctx, int i) =>
-                    _ShowcaseCard(card: top[i]),
+                    _ShowcaseCard(cards: top, index: i),
               ),
             ),
           ],
@@ -73,30 +72,23 @@ class CardShowcaseWidget extends ConsumerWidget {
 }
 
 class _ShowcaseCard extends ConsumerWidget {
-  const _ShowcaseCard({required this.card});
-  final CardItem card;
+  const _ShowcaseCard({required this.cards, required this.index});
+  final List<CardItem> cards;
+  final int index;
+  CardItem get card => cards[index];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final String heroTag = 'showcase_img_${card.id}';
     final CurrencyUnit currency = ref.watch(profileCurrencyProvider);
     return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        Navigator.of(context).push(
-          PageRouteBuilder(
-            opaque: false,
-            pageBuilder: (_, __, ___) => CardDetailLightbox(
-              card: card,
-              currency: currency,
-              heroTag: heroTag,
-              onEdit: () => showManualAddCardSheet(context, initialCard: card),
-            ),
-            transitionsBuilder: (_, a, __, child) =>
-                FadeTransition(opacity: a, child: child),
-          ),
-        );
-      },
+      onTap: () => showCardDetailModal(
+        context,
+        cards,
+        index,
+        currency: currency,
+        onEdit: () => showManualAddCardSheet(context, initialCard: card),
+      ),
       child: Container(
         width: 132,
         padding: const EdgeInsets.all(10),
@@ -122,6 +114,7 @@ class _ShowcaseCard extends ConsumerWidget {
                   width: 112,
                   height: 96,
                   cacheSize: 240,
+                  enableHdPreview: true,
                 ),
               ),
             ),

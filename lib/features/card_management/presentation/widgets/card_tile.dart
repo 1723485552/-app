@@ -13,17 +13,19 @@ import 'card_cover_image.dart';
 import '../helpers/card_meta.dart';
 import '../providers/profile_providers.dart';
 import '../providers/card_providers.dart';
-import 'card_detail_lightbox.dart';
+import 'card_detail_modal.dart';
 import 'manual_add_card_sheet.dart';
 
 /// 紧凑型单张卡牌瓦片（攒卡网格 3 列微型贴纸框）。
 ///
 /// 仅保留：缩略图（Hero 联动大图）+ 微型评级勋章（如 PSA 10）+ 单行卡名 + 简短价格；
-/// 点击触发微信式全屏大图预览 [CardDetailLightbox]，带 Haptic 触觉反馈。
+/// 点击卡片任意位置统一打开沉浸式详情浮层 [CardDetailModal]，带 Haptic 触觉反馈。
 class CardTile extends ConsumerWidget {
-  const CardTile({super.key, required this.card});
+  const CardTile({super.key, required this.cards, required this.index});
 
-  final CardItem card;
+  final List<CardItem> cards;
+  final int index;
+  CardItem get card => cards[index];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -33,22 +35,13 @@ class CardTile extends ConsumerWidget {
     final bool up = pct >= 0;
     final String heroTag = 'card_img_${card.id}';
     return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        Navigator.of(context).push(
-          PageRouteBuilder(
-            opaque: false,
-            pageBuilder: (_, __, ___) => CardDetailLightbox(
-              card: card,
-              currency: currency,
-              heroTag: heroTag,
-              onEdit: () => showManualAddCardSheet(context, initialCard: card),
-            ),
-            transitionsBuilder: (_, a, __, child) =>
-                FadeTransition(opacity: a, child: child),
-          ),
-        );
-      },
+      onTap: () => showCardDetailModal(
+        context,
+        cards,
+        index,
+        currency: currency,
+        onEdit: () => showManualAddCardSheet(context, initialCard: card),
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: context.gold.bgDark,
@@ -70,6 +63,7 @@ class CardTile extends ConsumerWidget {
                       width: double.infinity,
                       height: 78,
                       cacheSize: 300,
+                      enableHdPreview: true,
                     ),
                   ),
                 ),

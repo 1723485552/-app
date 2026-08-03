@@ -115,7 +115,7 @@ class _Body extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (state) {
-      TcgdexIdle() => _Hint(icon: Icons.search_outlined, text: '输入关键字开始搜索 TCGdex 卡牌'),
+      TcgdexIdle() => const _Hint(icon: Icons.search_outlined, text: '输入关键字开始搜索 TCGdex 卡牌'),
       TcgdexLoading() => const Center(
           child: CircularProgressIndicator(color: AppColors.goldPrimary),
         ),
@@ -126,7 +126,7 @@ class _Body extends StatelessWidget {
 
   Widget _buildGrid(BuildContext context, List<TcgdexCard> cards) {
     if (cards.isEmpty) {
-      return _Hint(icon: Icons.inventory_2_outlined, text: '未找到相关卡牌，换个关键字试试');
+      return const _Hint(icon: Icons.inventory_2_outlined, text: '未找到相关卡牌，换个关键字试试');
     }
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 200),

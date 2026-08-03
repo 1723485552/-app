@@ -117,7 +117,8 @@ class CardGrid extends StatelessWidget {
         childAspectRatio: 0.66,
       ),
       itemCount: cards.length,
-      itemBuilder: (BuildContext ctx, int i) => CardTile(card: cards[i]),
+      itemBuilder: (BuildContext ctx, int i) =>
+          CardTile(cards: cards, index: i),
     );
   }
 }

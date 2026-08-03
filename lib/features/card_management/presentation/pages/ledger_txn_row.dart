@@ -7,25 +7,42 @@ import '../../domain/enums/currency_unit.dart';
 import '../widgets/card_cover_image.dart';
 import '../helpers/card_meta.dart';
 import '../../../../core/utils/currency_formatter.dart';
+import '../widgets/card_detail_modal.dart';
+import '../widgets/manual_add_card_sheet.dart';
 
 /// 单条交易流水（缩略图 + 卡名 + 金额 + 日期，时间倒序）。
 ///
 /// 从 [LedgerView] 抽离为独立组件，使主文件收控在 250 行内（RULES 硬规）。
+/// 整行可点击，统一打开 [CardDetailModal]（缩略图点击则触发高清预览，不冲突）。
 class LedgerTxnRow extends StatelessWidget {
-  const LedgerTxnRow({super.key, required this.card, required this.currency});
-  final CardItem card;
+  const LedgerTxnRow(
+      {super.key,
+      required this.cards,
+      required this.index,
+      required this.currency});
+  final List<CardItem> cards;
+  final int index;
   final CurrencyUnit currency;
+  CardItem get card => cards[index];
 
   @override
-  Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: context.gold.surfaceDark,
-          border: Border.all(color: AppColors.goldBorder, width: 0.5),
-          borderRadius: BorderRadius.circular(14),
+  Widget build(BuildContext context) => GestureDetector(
+        onTap: () => showCardDetailModal(
+          context,
+          cards,
+          index,
+          currency: currency,
+          onEdit: () => showManualAddCardSheet(context, initialCard: card),
         ),
-        child: Row(
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: context.gold.surfaceDark,
+            border: Border.all(color: AppColors.goldBorder, width: 0.5),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
           children: <Widget>[
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
@@ -34,6 +51,7 @@ class LedgerTxnRow extends StatelessWidget {
                 width: 48,
                 height: 48,
                 cacheSize: 300,
+                enableHdPreview: true,
               ),
             ),
             const SizedBox(width: 12),
@@ -85,7 +103,8 @@ class LedgerTxnRow extends StatelessWidget {
                 )),
           ],
         ),
-      );
+      ),
+    );
 }
 
 /// 日期格式化（YYYY.MM.DD），避免引入 intl 依赖。

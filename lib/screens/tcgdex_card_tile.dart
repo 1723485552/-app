@@ -44,6 +44,7 @@ class TcgdexCardTile extends StatelessWidget {
                 width: double.infinity,
                 height: 132,
                 cacheSize: 300,
+                enableHdPreview: true,
               ),
             ),
             Padding(
@@ -65,7 +66,7 @@ class TcgdexCardTile extends StatelessWidget {
                   const SizedBox(height: 4),
                   if (card.rarity != null && card.rarity!.isNotEmpty)
                     Text(card.rarity!,
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: AppColors.goldPrimary,
                             fontSize: 11,
                             fontWeight: FontWeight.w600),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/hd_image_actions.dart';
+import '../../../../core/widgets/hd_image_viewer.dart';
 import '../helpers/card_image.dart';
 
 /// 高颜值默认卡背（纯 Widget 绘制，零资源依赖）。
@@ -65,6 +67,7 @@ class CardCoverImage extends StatelessWidget {
     this.width,
     this.height,
     this.cacheSize = 300,
+    this.enableHdPreview = false,
   });
   final String imageUrl;
   final BoxFit fit;
@@ -72,17 +75,32 @@ class CardCoverImage extends StatelessWidget {
   final double? height;
   final int cacheSize;
 
+  /// 开启后点击缩略图跳转 [HdImageViewer] 全屏高清预览（全局接入要求）。
+  final bool enableHdPreview;
+
   @override
   Widget build(BuildContext context) {
     final Widget fallback = DefaultCardBack(width: width, height: height);
     if (imageUrl.isEmpty) return fallback;
-    return Image(
+    final Widget img = Image(
       image: ResizeImage(cardImageProvider(imageUrl),
           width: cacheSize, height: cacheSize),
       width: width,
       height: height,
       fit: fit,
       errorBuilder: (_, __, ___) => fallback,
+    );
+    if (!enableHdPreview) return img;
+    return GestureDetector(
+      onTap: () => showHdImage(
+            context,
+            imageUrl,
+            actions: <HdImageAction>[
+              hdShareAction(context, imageUrl),
+              hdSaveAction(context, imageUrl),
+            ],
+          ),
+      child: img,
     );
   }
 }

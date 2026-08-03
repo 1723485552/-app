@@ -43,59 +43,64 @@ const CardItemSchema = CollectionSchema(
       type: IsarType.string,
       enumMap: _CardItemcategoryEnumValueMap,
     ),
-    r'certNumber': PropertySchema(
+    r'centeringResult': PropertySchema(
       id: 5,
+      name: r'centeringResult',
+      type: IsarType.string,
+    ),
+    r'certNumber': PropertySchema(
+      id: 6,
       name: r'certNumber',
       type: IsarType.string,
     ),
     r'gradeScore': PropertySchema(
-      id: 6,
+      id: 7,
       name: r'gradeScore',
       type: IsarType.double,
     ),
     r'grading': PropertySchema(
-      id: 7,
+      id: 8,
       name: r'grading',
       type: IsarType.string,
       enumMap: _CardItemgradingEnumValueMap,
     ),
     r'imageUrl': PropertySchema(
-      id: 8,
+      id: 9,
       name: r'imageUrl',
       type: IsarType.string,
     ),
     r'isCollected': PropertySchema(
-      id: 9,
+      id: 10,
       name: r'isCollected',
       type: IsarType.bool,
     ),
     r'isWishlist': PropertySchema(
-      id: 10,
+      id: 11,
       name: r'isWishlist',
       type: IsarType.bool,
     ),
     r'marketPrice': PropertySchema(
-      id: 11,
+      id: 12,
       name: r'marketPrice',
       type: IsarType.double,
     ),
     r'priceHistoryJson': PropertySchema(
-      id: 12,
+      id: 13,
       name: r'priceHistoryJson',
       type: IsarType.string,
     ),
     r'targetPrice': PropertySchema(
-      id: 13,
+      id: 14,
       name: r'targetPrice',
       type: IsarType.double,
     ),
     r'volume': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'volume',
       type: IsarType.double,
     ),
     r'wishlistPriority': PropertySchema(
-      id: 15,
+      id: 16,
       name: r'wishlistPriority',
       type: IsarType.long,
     )
@@ -124,6 +129,12 @@ int _cardItemEstimateSize(
   bytesCount += 3 + object.cardNumber.length * 3;
   bytesCount += 3 + object.category.name.length * 3;
   {
+    final value = object.centeringResult;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
     final value = object.certNumber;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -146,17 +157,18 @@ void _cardItemSerialize(
   writer.writeString(offsets[2], object.cardName);
   writer.writeString(offsets[3], object.cardNumber);
   writer.writeString(offsets[4], object.category.name);
-  writer.writeString(offsets[5], object.certNumber);
-  writer.writeDouble(offsets[6], object.gradeScore);
-  writer.writeString(offsets[7], object.grading.name);
-  writer.writeString(offsets[8], object.imageUrl);
-  writer.writeBool(offsets[9], object.isCollected);
-  writer.writeBool(offsets[10], object.isWishlist);
-  writer.writeDouble(offsets[11], object.marketPrice);
-  writer.writeString(offsets[12], object.priceHistoryJson);
-  writer.writeDouble(offsets[13], object.targetPrice);
-  writer.writeDouble(offsets[14], object.volume);
-  writer.writeLong(offsets[15], object.wishlistPriority);
+  writer.writeString(offsets[5], object.centeringResult);
+  writer.writeString(offsets[6], object.certNumber);
+  writer.writeDouble(offsets[7], object.gradeScore);
+  writer.writeString(offsets[8], object.grading.name);
+  writer.writeString(offsets[9], object.imageUrl);
+  writer.writeBool(offsets[10], object.isCollected);
+  writer.writeBool(offsets[11], object.isWishlist);
+  writer.writeDouble(offsets[12], object.marketPrice);
+  writer.writeString(offsets[13], object.priceHistoryJson);
+  writer.writeDouble(offsets[14], object.targetPrice);
+  writer.writeDouble(offsets[15], object.volume);
+  writer.writeLong(offsets[16], object.wishlistPriority);
 }
 
 CardItem _cardItemDeserialize(
@@ -173,19 +185,20 @@ CardItem _cardItemDeserialize(
     category:
         _CardItemcategoryValueEnumMap[reader.readStringOrNull(offsets[4])] ??
             CardCategory.all,
-    certNumber: reader.readStringOrNull(offsets[5]),
-    gradeScore: reader.readDoubleOrNull(offsets[6]),
+    centeringResult: reader.readStringOrNull(offsets[5]),
+    certNumber: reader.readStringOrNull(offsets[6]),
+    gradeScore: reader.readDoubleOrNull(offsets[7]),
     grading:
-        _CardItemgradingValueEnumMap[reader.readStringOrNull(offsets[7])] ??
+        _CardItemgradingValueEnumMap[reader.readStringOrNull(offsets[8])] ??
             GradingCompany.raw,
-    imageUrl: reader.readString(offsets[8]),
-    isCollected: reader.readBoolOrNull(offsets[9]) ?? true,
-    isWishlist: reader.readBoolOrNull(offsets[10]) ?? false,
-    marketPrice: reader.readDouble(offsets[11]),
-    priceHistoryJson: reader.readStringOrNull(offsets[12]) ?? '',
-    targetPrice: reader.readDoubleOrNull(offsets[13]),
-    volume: reader.readDoubleOrNull(offsets[14]) ?? 0.0,
-    wishlistPriority: reader.readLongOrNull(offsets[15]) ?? 0,
+    imageUrl: reader.readString(offsets[9]),
+    isCollected: reader.readBoolOrNull(offsets[10]) ?? true,
+    isWishlist: reader.readBoolOrNull(offsets[11]) ?? false,
+    marketPrice: reader.readDouble(offsets[12]),
+    priceHistoryJson: reader.readStringOrNull(offsets[13]) ?? '',
+    targetPrice: reader.readDoubleOrNull(offsets[14]),
+    volume: reader.readDoubleOrNull(offsets[15]) ?? 0.0,
+    wishlistPriority: reader.readLongOrNull(offsets[16]) ?? 0,
   );
   object.id = id;
   return object;
@@ -212,25 +225,27 @@ P _cardItemDeserializeProp<P>(
     case 5:
       return (reader.readStringOrNull(offset)) as P;
     case 6:
-      return (reader.readDoubleOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 7:
+      return (reader.readDoubleOrNull(offset)) as P;
+    case 8:
       return (_CardItemgradingValueEnumMap[reader.readStringOrNull(offset)] ??
           GradingCompany.raw) as P;
-    case 8:
-      return (reader.readString(offset)) as P;
     case 9:
-      return (reader.readBoolOrNull(offset) ?? true) as P;
+      return (reader.readString(offset)) as P;
     case 10:
-      return (reader.readBoolOrNull(offset) ?? false) as P;
+      return (reader.readBoolOrNull(offset) ?? true) as P;
     case 11:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readBoolOrNull(offset) ?? false) as P;
     case 12:
-      return (reader.readStringOrNull(offset) ?? '') as P;
+      return (reader.readDouble(offset)) as P;
     case 13:
-      return (reader.readDoubleOrNull(offset)) as P;
+      return (reader.readStringOrNull(offset) ?? '') as P;
     case 14:
-      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+      return (reader.readDoubleOrNull(offset)) as P;
     case 15:
+      return (reader.readDoubleOrNull(offset) ?? 0.0) as P;
+    case 16:
       return (reader.readLongOrNull(offset) ?? 0) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -854,6 +869,160 @@ extension CardItemQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'category',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CardItem, CardItem, QAfterFilterCondition>
+      centeringResultIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'centeringResult',
+      ));
+    });
+  }
+
+  QueryBuilder<CardItem, CardItem, QAfterFilterCondition>
+      centeringResultIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'centeringResult',
+      ));
+    });
+  }
+
+  QueryBuilder<CardItem, CardItem, QAfterFilterCondition>
+      centeringResultEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'centeringResult',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardItem, CardItem, QAfterFilterCondition>
+      centeringResultGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'centeringResult',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardItem, CardItem, QAfterFilterCondition>
+      centeringResultLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'centeringResult',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardItem, CardItem, QAfterFilterCondition>
+      centeringResultBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'centeringResult',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardItem, CardItem, QAfterFilterCondition>
+      centeringResultStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'centeringResult',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardItem, CardItem, QAfterFilterCondition>
+      centeringResultEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'centeringResult',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardItem, CardItem, QAfterFilterCondition>
+      centeringResultContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'centeringResult',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardItem, CardItem, QAfterFilterCondition>
+      centeringResultMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'centeringResult',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<CardItem, CardItem, QAfterFilterCondition>
+      centeringResultIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'centeringResult',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<CardItem, CardItem, QAfterFilterCondition>
+      centeringResultIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'centeringResult',
         value: '',
       ));
     });
@@ -1883,6 +2052,18 @@ extension CardItemQuerySortBy on QueryBuilder<CardItem, CardItem, QSortBy> {
     });
   }
 
+  QueryBuilder<CardItem, CardItem, QAfterSortBy> sortByCenteringResult() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'centeringResult', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CardItem, CardItem, QAfterSortBy> sortByCenteringResultDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'centeringResult', Sort.desc);
+    });
+  }
+
   QueryBuilder<CardItem, CardItem, QAfterSortBy> sortByCertNumber() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'certNumber', Sort.asc);
@@ -2078,6 +2259,18 @@ extension CardItemQuerySortThenBy
     });
   }
 
+  QueryBuilder<CardItem, CardItem, QAfterSortBy> thenByCenteringResult() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'centeringResult', Sort.asc);
+    });
+  }
+
+  QueryBuilder<CardItem, CardItem, QAfterSortBy> thenByCenteringResultDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'centeringResult', Sort.desc);
+    });
+  }
+
   QueryBuilder<CardItem, CardItem, QAfterSortBy> thenByCertNumber() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'certNumber', Sort.asc);
@@ -2258,6 +2451,14 @@ extension CardItemQueryWhereDistinct
     });
   }
 
+  QueryBuilder<CardItem, CardItem, QDistinct> distinctByCenteringResult(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'centeringResult',
+          caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<CardItem, CardItem, QDistinct> distinctByCertNumber(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -2365,6 +2566,12 @@ extension CardItemQueryProperty
   QueryBuilder<CardItem, CardCategory, QQueryOperations> categoryProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'category');
+    });
+  }
+
+  QueryBuilder<CardItem, String?, QQueryOperations> centeringResultProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'centeringResult');
     });
   }
 

@@ -10,6 +10,7 @@ import '../widgets/card_search_filter_bar.dart';
 import '../widgets/category_card_section.dart';
 import '../widgets/collection_tab_bar.dart';
 import '../widgets/empty_collection.dart';
+import 'package:card_management/features/card_catalog/presentation/pages/catalog_center_page.dart';
 
 /// 攒卡 / Card Collection。
 ///
@@ -40,6 +41,18 @@ class CardCollectionPage extends ConsumerWidget {
                 fontSize: 18,
                 fontWeight: FontWeight.w600)),
         centerTitle: false,
+        actions: <Widget>[
+          IconButton(
+            tooltip: '全图鉴',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const CatalogCenterPage(),
+              ),
+            ),
+            icon: Icon(Icons.auto_awesome_mosaic_outlined,
+                color: context.gold.textWhite, size: 22),
+          ),
+        ],
       ),
       body: Column(
         children: <Widget>[

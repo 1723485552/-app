@@ -23,6 +23,7 @@ class CardItem {
   final double? targetPrice;
   final int wishlistPriority;
   final String priceHistoryJson;
+  final String? centeringResult;
 
   CardItem({
     this.id = 0,
@@ -42,6 +43,7 @@ class CardItem {
     this.targetPrice,
     this.wishlistPriority = 0,
     this.priceHistoryJson = '',
+    this.centeringResult,
   });
 
   /// 利润 = 市场价格 - 买入价格
@@ -72,6 +74,7 @@ class CardItem {
     double? targetPrice,
     int? wishlistPriority,
     String? priceHistoryJson,
+    String? centeringResult,
   }) {
     return CardItem(
       id: id ?? this.id,
@@ -91,6 +94,7 @@ class CardItem {
       targetPrice: targetPrice ?? this.targetPrice,
       wishlistPriority: wishlistPriority ?? this.wishlistPriority,
       priceHistoryJson: priceHistoryJson ?? this.priceHistoryJson,
+      centeringResult: centeringResult ?? this.centeringResult,
     );
   }
 }

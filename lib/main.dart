@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,8 +11,25 @@ import 'features/card_management/domain/repositories/card_repository.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/card_management/presentation/pages/main_screen.dart';
 
+/// 全局异常兜底：拦截 Flutter 框架层与引擎层未捕获异常，避免直接黑屏闪退。
+///
+/// - [FlutterError.onError]：捕获 build / layout / paint 阶段的同步异常；
+/// - [PlatformDispatcher.instance.onError]：捕获 async / 原生回调中的未处理异常。
+/// 两者均只记录日志、不重新抛出，使 UI 维持上一帧渲染而非整屏黑掉。
+void _installGlobalErrorHandler() {
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    debugPrint('[全局捕获] FlutterError: ${details.exception}\n${details.stack}');
+  };
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    debugPrint('[全局捕获] PlatformDispatcher: $error\n$stack');
+    return true; // 已处理，阻止崩溃
+  };
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  _installGlobalErrorHandler();
   try {
     // 原生平台打开 Isar；Web 端仅初始化内存存储（详见 datasource）。
     // 首次进入保持本地库为空，不注入任何 Mock 数据（发布初始化要求）。

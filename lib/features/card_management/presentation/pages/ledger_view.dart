@@ -62,7 +62,8 @@ class LedgerView extends ConsumerWidget {
                 const SliverToBoxAdapter(child: _CenterHint(text: '暂无交易记录')),
               SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (_, int i) => LedgerTxnRow(card: txns[i], currency: currency),
+                  (_, int i) =>
+                      LedgerTxnRow(cards: txns, index: i, currency: currency),
                   childCount: txns.length,
                 ),
               ),

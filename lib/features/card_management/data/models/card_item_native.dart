@@ -63,6 +63,9 @@ class CardItem {
   /// 近 30 日价格走势（JSON 数组字符串，行情模块使用；空串表示尚无数据）
   final String priceHistoryJson;
 
+  /// 居中度测量结果（格式化字符串，如 "L/R: 52/48 | T/B: 51/49"；未测量为 null）
+  final String? centeringResult;
+
   CardItem({
     required this.cardName,
     required this.cardNumber,
@@ -80,6 +83,7 @@ class CardItem {
     this.targetPrice,
     this.wishlistPriority = 0,
     this.priceHistoryJson = '',
+    this.centeringResult,
   });
 
   /// 利润 = 市场价格 - 买入价格。
@@ -117,6 +121,7 @@ class CardItem {
     double? targetPrice,
     int? wishlistPriority,
     String? priceHistoryJson,
+    String? centeringResult,
   }) {
     return CardItem(
       cardName: cardName ?? this.cardName,
@@ -135,6 +140,7 @@ class CardItem {
       targetPrice: targetPrice ?? this.targetPrice,
       wishlistPriority: wishlistPriority ?? this.wishlistPriority,
       priceHistoryJson: priceHistoryJson ?? this.priceHistoryJson,
+      centeringResult: centeringResult ?? this.centeringResult,
     )..id = id ?? this.id;
   }
 }

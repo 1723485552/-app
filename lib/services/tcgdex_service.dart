@@ -84,11 +84,11 @@ class TcgdexService {
       }
       return parser(jsonDecode(res.body));
     } on TimeoutException {
-      throw TcgdexException('请求超时，请稍后重试');
+      throw const TcgdexException('请求超时，请稍后重试');
     } on TcgdexException {
       rethrow;
     } catch (e) {
-      throw TcgdexException('网络连接失败，请检查网络设置');
+      throw const TcgdexException('网络连接失败，请检查网络设置');
     }
   }
 
@@ -100,13 +100,13 @@ class TcgdexService {
       }
       final dynamic decoded = jsonDecode(res.body);
       if (decoded is List<dynamic>) return decoded;
-      throw TcgdexException('数据格式异常');
+      throw const TcgdexException('数据格式异常');
     } on TimeoutException {
-      throw TcgdexException('请求超时，请稍后重试');
+      throw const TcgdexException('请求超时，请稍后重试');
     } on TcgdexException {
       rethrow;
     } catch (e) {
-      throw TcgdexException('网络连接失败，请检查网络设置');
+      throw const TcgdexException('网络连接失败，请检查网络设置');
     }
   }
 }
