@@ -23,7 +23,7 @@ class CardShowcaseWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<List<CardItem>> asyncCards =
-        ref.watch(allCardsProvider);
+        ref.watch(allCardsProvider) ?? const AsyncLoading();
     return asyncCards.when(
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),

@@ -30,6 +30,19 @@ class CardLocalDatasource {
     });
   }
 
+  /// 写入或更新一张卡牌，并返回 Isar 实际分配的主键 id。
+  ///
+  /// 新增卡牌时 [CardItem.id] 为 `Isar.autoIncrement` 哨兵值，只有 `put` 之后才能
+  /// 拿到真实自增 id。Drift 侧需要用同一个 id 作为主键以保持两库一致，故提供此
+  /// 纯新增方法（不改动既有 [saveCard] 签名，对现有调用方 100% 无影响）。
+  Future<int> saveCardReturningId(CardItem card) async {
+    late int assignedId;
+    await isar.writeTxn(() async {
+      assignedId = await isar.cardItems.put(card);
+    });
+    return assignedId;
+  }
+
   /// 根据 id 删除卡牌
   Future<void> deleteCard(int id) async {
     await isar.writeTxn(() async {

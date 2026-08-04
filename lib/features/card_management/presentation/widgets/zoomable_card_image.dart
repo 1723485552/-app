@@ -23,13 +23,25 @@ class ZoomableCardImage extends StatefulWidget {
 class _ZoomableCardImageState extends State<ZoomableCardImage>
     with SingleTickerProviderStateMixin {
   final TransformationController _ctrl = TransformationController();
-  late final AnimationController _anim = AnimationController(
-      vsync: this, duration: const Duration(milliseconds: 220));
+  late final AnimationController _anim;
   bool _zoomed = false;
   VoidCallback? _scaleListener;
 
   @override
+  void initState() {
+    super.initState();
+    _anim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+    );
+  }
+
+  @override
   void dispose() {
+    if (_scaleListener != null) {
+      _anim.removeListener(_scaleListener!);
+      _scaleListener = null;
+    }
     _ctrl.dispose();
     _anim.dispose();
     super.dispose();
@@ -60,14 +72,22 @@ class _ZoomableCardImageState extends State<ZoomableCardImage>
 
   void _animateScale(double target) {
     _anim.stop();
-    if (_scaleListener != null) _anim.removeListener(_scaleListener!);
+    if (_scaleListener != null) {
+      _anim.removeListener(_scaleListener!);
+      _scaleListener = null;
+    }
     final double from = _ctrl.value.getMaxScaleOnAxis();
     final Animation<double> a = Tween<double>(begin: from, end: target)
         .animate(CurvedAnimation(parent: _anim, curve: Curves.easeOutCubic));
-    void listener() => _ctrl.value = _aroundCenter(a.value);
+    void listener() {
+      if (!mounted) return;
+      _ctrl.value = _aroundCenter(a.value);
+    }
+
     _scaleListener = listener;
     _anim.addListener(listener);
     _anim.forward(from: 0).then((_) {
+      if (!mounted) return;
       if (_scaleListener == listener) {
         _anim.removeListener(listener);
         _scaleListener = null;

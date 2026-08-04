@@ -8,11 +8,14 @@ import '../../domain/repositories/card_repository.dart';
 final StateProvider<CardCategory> selectedCategoryProvider =
     StateProvider<CardCategory>((ref) => CardCategory.all);
 
-/// 全量卡牌（来自本地数据源，首次进入为空，不注入任何 Mock 数据）。
-final FutureProvider<List<CardItem>> allCardsProvider =
-    FutureProvider<List<CardItem>>((ref) async {
-  final CardRepository repo = ref.read(cardRepositoryProvider);
-  return repo.getAllCards();
+/// 全量卡牌响应式流（来自本地 SQLite，写入即自动推送刷新，无手动 invalidate）。
+///
+/// 底层绑定 [CardRepository.watchAll]，由 Drift 的 [AppDatabase.watchAllCards]
+/// 原生驱动；增 / 删 / 改 / 恢复（replaceAllCards）均会触发下游 UI 重建。
+final StreamProvider<List<CardItem>> allCardsProvider =
+    StreamProvider<List<CardItem>>((ref) {
+  final CardRepository repo = ref.watch(cardRepositoryProvider);
+  return repo.watchAll();
 });
 
 /// 按选中分类过滤后的卡牌流（全页联动核心）。
@@ -21,7 +24,8 @@ final FutureProvider<List<CardItem>> allCardsProvider =
 /// 切换分类时自动重算并驱动各自动画重播。
 final Provider<AsyncValue<List<CardItem>>> categoryFilteredCardsProvider =
     Provider<AsyncValue<List<CardItem>>>((ref) {
-  final AsyncValue<List<CardItem>> asyncCards = ref.watch(allCardsProvider);
+  final AsyncValue<List<CardItem>> asyncCards =
+      ref.watch(allCardsProvider) ?? const AsyncLoading();
   final CardCategory category = ref.watch(selectedCategoryProvider);
   return asyncCards.whenData((List<CardItem> cards) {
     if (category == CardCategory.all) return cards;

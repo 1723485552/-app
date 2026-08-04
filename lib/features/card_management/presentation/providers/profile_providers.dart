@@ -35,7 +35,8 @@ class ProfileStats {
 /// 由全量卡牌实时计算个人指标，切换货币/数据变更时随 [allCardsProvider] 自动刷新。
 final Provider<AsyncValue<ProfileStats>> profileStatsProvider =
     Provider<AsyncValue<ProfileStats>>((ref) {
-  final AsyncValue<List<CardItem>> asyncCards = ref.watch(allCardsProvider);
+  final AsyncValue<List<CardItem>> asyncCards =
+      ref.watch(allCardsProvider) ?? const AsyncLoading();
   return asyncCards.whenData((List<CardItem> cards) {
     if (cards.isEmpty) {
       return const ProfileStats(

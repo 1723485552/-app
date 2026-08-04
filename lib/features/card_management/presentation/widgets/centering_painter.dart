@@ -1,49 +1,138 @@
 import 'package:flutter/material.dart';
 
-/// 居中度测量画布绘制：外框（卡片边缘）+ 内框（图案边界）+ 四向辅助线。
-///
-/// 坐标以像素为单位（由调用方把归一化矩形换算到画布尺寸后传入）。
 class CenteringPainter extends CustomPainter {
-  const CenteringPainter({
-    required this.outer,
-    required this.inner,
-    required this.outerColor,
-    required this.innerColor,
-  });
+  final Rect outerRect;
+  final Rect innerRect;
+  final bool isAutoDetected;
+  final Offset? activeDragHandle;
 
-  final Rect outer;
-  final Rect inner;
-  final Color outerColor;
-  final Color innerColor;
+  CenteringPainter({
+    required this.outerRect,
+    required this.innerRect,
+    this.isAutoDetected = false,
+    this.activeDragHandle,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final Paint outerPaint = Paint()
-      ..color = outerColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    final Paint innerPaint = Paint()
-      ..color = innerColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-    canvas.drawRect(outer, outerPaint);
-    canvas.drawRect(inner, innerPaint);
+    final Paint maskPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.55)
+      ..style = PaintingStyle.fill;
 
-    // 四向辅助线：从内框各边延伸到外框，直观呈现偏心量。
-    final Paint guide = Paint()
-      ..color = innerColor.withValues(alpha: 0.45)
+    final Path maskPath = Path.combine(
+      PathOperation.difference,
+      Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height)),
+      Path()..addRect(outerRect),
+    );
+    canvas.drawPath(maskPath, maskPaint);
+
+    final Paint outerBorderPaint = Paint()
+      ..color = const Color(0xFFFFD700)
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+    canvas.drawRect(outerRect, outerBorderPaint);
+
+    final Paint innerBorderPaint = Paint()
+      ..color = isAutoDetected ? Colors.greenAccent : const Color(0xFFE6C687)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+    canvas.drawRect(innerRect, innerBorderPaint);
+    _drawDashedRect(canvas, innerRect, innerBorderPaint, dashWidth: 8.0, gapWidth: 4.0);
+
+    final Paint guidePaint = Paint()
+      ..color = Colors.cyanAccent.withValues(alpha: 0.75)
+      ..strokeWidth = 1.0;
+
+    canvas.drawLine(
+      Offset(outerRect.left, innerRect.center.dy),
+      Offset(innerRect.left, innerRect.center.dy),
+      guidePaint,
+    );
+    canvas.drawLine(
+      Offset(innerRect.right, innerRect.center.dy),
+      Offset(outerRect.right, innerRect.center.dy),
+      guidePaint,
+    );
+    canvas.drawLine(
+      Offset(innerRect.center.dx, outerRect.top),
+      Offset(innerRect.center.dx, innerRect.top),
+      guidePaint,
+    );
+    canvas.drawLine(
+      Offset(innerRect.center.dx, innerRect.bottom),
+      Offset(innerRect.center.dx, outerRect.bottom),
+      guidePaint,
+    );
+
+    final Paint handlePaint = Paint()
+      ..color = isAutoDetected ? Colors.greenAccent : Colors.orangeAccent
+      ..style = PaintingStyle.fill;
+
+    final Paint handleBorderPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.75)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-    canvas.drawLine(
-        Offset(inner.left, outer.top), Offset(inner.left, outer.bottom), guide);
-    canvas.drawLine(
-        Offset(inner.right, outer.top), Offset(inner.right, outer.bottom), guide);
-    canvas.drawLine(
-        Offset(outer.left, inner.top), Offset(outer.right, inner.top), guide);
-    canvas.drawLine(
-        Offset(outer.left, inner.bottom), Offset(outer.right, inner.bottom), guide);
+      ..strokeWidth = 1.4;
+
+    final List<Offset> handles = [
+      Offset(innerRect.left, innerRect.top + innerRect.height / 2),
+      Offset(innerRect.right, innerRect.top + innerRect.height / 2),
+      Offset(innerRect.left + innerRect.width / 2, innerRect.top),
+      Offset(innerRect.left + innerRect.width / 2, innerRect.bottom),
+    ];
+
+    for (final Offset handle in handles) {
+      canvas.drawCircle(handle, 6.5, handlePaint);
+      canvas.drawCircle(handle, 8.5, handleBorderPaint);
+    }
+
+    if (activeDragHandle != null) {
+      canvas.drawCircle(
+        activeDragHandle!,
+        14.0,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.14)
+          ..style = PaintingStyle.fill,
+      );
+      canvas.drawCircle(
+        activeDragHandle!,
+        12.0,
+        Paint()
+          ..color = Colors.white.withValues(alpha: 0.35)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.0,
+      );
+    }
+  }
+
+  void _drawDashedRect(Canvas canvas, Rect rect, Paint paint,
+      {required double dashWidth, required double gapWidth}) {
+    final Path path = Path();
+    void addSegment(Offset start, Offset end) {
+      final double distance = (end - start).distance;
+      if (distance <= 0) return;
+      final int count = (distance / (dashWidth + gapWidth)).floor();
+      final Offset direction = (end - start) / distance;
+      for (int i = 0; i < count; i++) {
+        final Offset dashStart = start + direction * (i * (dashWidth + gapWidth));
+        final Offset dashEnd = dashStart + direction * dashWidth;
+        path.moveTo(dashStart.dx, dashStart.dy);
+        path.lineTo(dashEnd.dx, dashEnd.dy);
+      }
+    }
+
+    addSegment(rect.topLeft, rect.topRight);
+    addSegment(rect.topRight, rect.bottomRight);
+    addSegment(rect.bottomRight, rect.bottomLeft);
+    addSegment(rect.bottomLeft, rect.topLeft);
+
+    canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(covariant CenteringPainter old) => true;
+  bool shouldRepaint(covariant CenteringPainter oldDelegate) {
+    return oldDelegate.outerRect != outerRect ||
+        oldDelegate.innerRect != innerRect ||
+        oldDelegate.isAutoDetected != isAutoDetected ||
+        oldDelegate.activeDragHandle != activeDragHandle;
+  }
 }

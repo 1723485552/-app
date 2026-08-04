@@ -1,9 +1,13 @@
+import com.android.build.api.dsl.LibraryExtension
+import com.android.build.api.dsl.ApplicationExtension
+
 allprojects {
     repositories {
         google()
         mavenCentral()
     }
 }
+
 
 val newBuildDir: Directory = rootProject.layout.buildDirectory.dir("../../build").get()
 rootProject.layout.buildDirectory.value(newBuildDir)
@@ -15,6 +19,19 @@ subprojects {
 
 subprojects {
     project.evaluationDependsOn(":app")
+}
+
+subprojects {
+    plugins.withId("com.android.library") {
+        extensions.configure<LibraryExtension>("android") {
+            this.compileSdk = 36
+        }
+    }
+    plugins.withId("com.android.application") {
+        extensions.configure<ApplicationExtension>("android") {
+            this.compileSdk = 36
+        }
+    }
 }
 
 // Workaround for file_picker 11.0.3 + AGP 9 (Flutter 3.44):

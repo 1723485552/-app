@@ -7,7 +7,6 @@ import '../../../../core/widgets/gold_snack_bar.dart';
 import '../../data/models/card_item.dart';
 import '../../domain/enums/currency_unit.dart';
 import '../../domain/repositories/card_repository.dart';
-import '../providers/card_providers.dart';
 import '../pages/centering_measurement_page.dart';
 import 'card_detail_bars.dart';
 import 'card_detail_drag_dismiss.dart';
@@ -88,13 +87,11 @@ class _CardDetailModalState extends ConsumerState<CardDetailModal> {
     final ScaffoldMessengerState messenger = ScaffoldMessenger.of(context);
     final NavigatorState navigator = Navigator.of(context);
     await container.read(cardRepositoryProvider).deleteCard(temp.id);
-    container.invalidate(allCardsProvider);
     if (!mounted) return;
     GoldSnackBar.showOn(messenger, '卡牌已删除',
         actionLabel: '撤销',
         duration: const Duration(seconds: 3), onAction: () async {
       await container.read(cardRepositoryProvider).saveCard(temp);
-      container.invalidate(allCardsProvider);
     });
     navigator.pop();
   }

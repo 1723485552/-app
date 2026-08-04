@@ -141,10 +141,8 @@ class _CenteringMeasurementPageState
                       ),
                       CustomPaint(
                         painter: CenteringPainter(
-                          outer: outerPx,
-                          inner: innerPx,
-                          outerColor: AppColors.goldPrimary,
-                          innerColor: AppColors.goldGlow,
+                          outerRect: outerPx,
+                          innerRect: innerPx,
                         ),
                       ),
                       ..._handles(innerPx),

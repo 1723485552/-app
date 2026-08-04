@@ -5,5 +5,4 @@
 /// （[card_local_datasource_web]），保证 Web 构建可编译。
 library;
 
-export 'card_local_datasource_native.dart'
-    if (dart.library.html) 'card_local_datasource_web.dart';
+export 'card_local_datasource_native.dart';

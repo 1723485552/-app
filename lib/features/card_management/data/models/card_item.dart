@@ -5,4 +5,4 @@
 /// 从而把 Isar / FFI 代码彻底排除在 Web 构建之外。
 library;
 
-export 'card_item_native.dart' if (dart.library.html) 'card_item_web.dart';
+export 'card_item_native.dart';

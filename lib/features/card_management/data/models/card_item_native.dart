@@ -22,6 +22,15 @@ class CardItem {
   /// 图片地址
   final String imageUrl;
 
+  /// 所属系列/卡组名（H-4 新增，用于公共主图鉴 ID 标准化）。
+  ///
+  /// 以 [@ignore] 声明：当前 Isar 生成器缺失（H-5 不在本批），新增普通存储字段需
+  /// 重生成 `card_item_native.g.dart` 而不可行；[@ignore] 仅作运行期 Dart 字段，
+  /// 不参与 Isar 持久化，因此无需重生成，且保存时即可随 [CardItem] 透传到主图鉴上报
+  /// （落地持久化由 Drift 侧 `setName` 列承担）。
+  @ignore
+  String setName = '';
+
   /// 评级公司，默认裸卡（以 name 形式存储为字符串）
   @Enumerated(EnumType.name)
   final GradingCompany grading;
@@ -70,6 +79,7 @@ class CardItem {
     required this.cardName,
     required this.cardNumber,
     required this.imageUrl,
+    this.setName = '',
     this.grading = GradingCompany.raw,
     this.category = CardCategory.all,
     this.gradeScore,
@@ -108,6 +118,7 @@ class CardItem {
     String? cardName,
     String? cardNumber,
     String? imageUrl,
+    String? setName,
     GradingCompany? grading,
     CardCategory? category,
     double? gradeScore,
@@ -127,6 +138,7 @@ class CardItem {
       cardName: cardName ?? this.cardName,
       cardNumber: cardNumber ?? this.cardNumber,
       imageUrl: imageUrl ?? this.imageUrl,
+      setName: setName ?? this.setName,
       grading: grading ?? this.grading,
       category: category ?? this.category,
       gradeScore: gradeScore ?? this.gradeScore,

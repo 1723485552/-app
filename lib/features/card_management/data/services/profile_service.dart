@@ -5,5 +5,4 @@
 /// 保证 Web 构建可编译且预览中功能可真实触发。
 library;
 
-export 'profile_service_native.dart'
-    if (dart.library.html) 'profile_service_web.dart';
+export 'profile_service_native.dart';

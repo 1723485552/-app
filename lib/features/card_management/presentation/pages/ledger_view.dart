@@ -18,7 +18,8 @@ class LedgerView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<CardItem>> asyncCards = ref.watch(allCardsProvider);
+    final AsyncValue<List<CardItem>> asyncCards =
+        ref.watch(allCardsProvider) ?? const AsyncLoading();
     final CurrencyUnit currency = ref.watch(profileCurrencyProvider);
     return Scaffold(
       backgroundColor: context.gold.bgDark,

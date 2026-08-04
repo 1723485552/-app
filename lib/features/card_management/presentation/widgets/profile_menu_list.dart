@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:card_management/core/theme/gold_theme_extension.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import 'package:card_management/core/theme/theme_provider.dart';
@@ -32,6 +33,26 @@ class ProfileMenuList extends ConsumerStatefulWidget {
 }
 
 class _ProfileMenuListState extends ConsumerState<ProfileMenuList> {
+  String _versionLabel = 'v0.1.0+1';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPackageInfo();
+  }
+
+  Future<void> _loadPackageInfo() async {
+    try {
+      final PackageInfo info = await PackageInfo.fromPlatform();
+      if (!mounted) return;
+      setState(() {
+        _versionLabel = 'v${info.version}+${info.buildNumber}';
+      });
+    } catch (_) {
+      // 保持默认值即可。
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final CurrencyUnit unit = ref.watch(profileCurrencyProvider);
@@ -112,7 +133,7 @@ class _ProfileMenuListState extends ConsumerState<ProfileMenuList> {
             ProfileMenuItem(
               icon: Icons.info_outline,
               title: '关于与版本',
-              subtitle: '规范说明 · v0.1.0',
+              subtitle: '规范说明 · $_versionLabel',
               onTap: () => _onAbout(context),
             ),
           ],
@@ -151,7 +172,6 @@ class _ProfileMenuListState extends ConsumerState<ProfileMenuList> {
     if (ok != true) return;
     try {
       final int n = await DataBackupService.importBackup();
-      ref.invalidate(allCardsProvider);
       if (context.mounted) {
         _toast(context,
             n > 0 ? '已恢复 $n 张卡牌' : n == -1 ? '已取消' : '未找到本地备份');
@@ -211,7 +231,7 @@ class _ProfileMenuListState extends ConsumerState<ProfileMenuList> {
   void _onAbout(BuildContext context) {
     showDialog<void>(
       context: context,
-      builder: (_) => const ProfileAboutDialog(),
+      builder: (_) => ProfileAboutDialog(version: _versionLabel),
     );
   }
 

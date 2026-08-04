@@ -9,7 +9,6 @@ import '../../domain/enums/card_category.dart';
 import '../../domain/enums/grading_company.dart';
 import '../widgets/market_estimate_field.dart';
 import '../helpers/card_meta.dart';
-import '../providers/card_providers.dart';
 import 'card_cover_picker.dart';
 // 扫码 / OCR 识别后回填到手动表单的预填数据。
 class ManualAddPrefill {
@@ -146,7 +145,6 @@ class _ManualAddFormState extends ConsumerState<ManualAddForm> {
       );
       await ref.read(cardRepositoryProvider).saveCard(card);
     }
-    ref.invalidate(allCardsProvider);
     HapticFeedback.mediumImpact();
     setState(() => _saved = true);
     await Future<void>.delayed(const Duration(milliseconds: 900));

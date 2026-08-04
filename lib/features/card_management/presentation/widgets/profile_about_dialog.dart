@@ -4,17 +4,14 @@ import 'package:card_management/core/theme/gold_theme_extension.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/brand_logo.dart';
 
-/// 大厂 Style 关于弹窗（含版本号与 RULES.md 规范说明）。
+/// 大厂 Style 关于弹窗，仅展示版本信息。
 class ProfileAboutDialog extends StatelessWidget {
-  const ProfileAboutDialog({super.key});
+  const ProfileAboutDialog({
+    super.key,
+    required this.version,
+  });
 
-  static const String _version = 'v0.1.0 (1)';
-  static const List<String> _rules = <String>[
-    '简洁而不简单：极简视觉 + 8dp 网格 + 细腻微交互',
-    '防偷懒架构：Clean Architecture 拆分 + 真实 Riverpod 联动',
-    '静态零容忍：dart analyze 0 Error / 0 Warning / 0 Info',
-    '强制 QA 自查：每次交付附《QA 严格自我验收清单》',
-  ];
+  final String version;
 
   @override
   Widget build(BuildContext context) {
@@ -56,41 +53,10 @@ class ProfileAboutDialog extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              '版本 $_version',
+              '版本 $version',
               style: TextStyle(color: context.gold.textMuted, fontSize: 12),
             ),
             const SizedBox(height: 16),
-            Text(
-              '开发规范（RULES.md）',
-              style: TextStyle(
-                color: context.gold.textWhite,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            for (final String r in _rules)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    const Text('· ',
-                        style: TextStyle(
-                            color: AppColors.goldPrimary, fontSize: 13)),
-                    Expanded(
-                      child: Text(
-                        r,
-                        style: TextStyle(
-                          color: context.gold.textMuted,
-                          fontSize: 12,
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
           ],
         ),
       ),

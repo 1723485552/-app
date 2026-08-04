@@ -8,7 +8,6 @@ import '../../domain/repositories/card_repository.dart';
 import '../../data/models/card_item.dart';
 import '../../domain/enums/card_category.dart';
 import '../helpers/card_meta.dart';
-import '../providers/card_providers.dart';
 import 'card_cover_picker.dart';
 
 // 黑金高奢「心愿单录入」底部抽屉（轻量版：卡名 / 系列 / 目标价 / 星级 / 示例图）。
@@ -56,7 +55,6 @@ class _WishlistAddFormState extends ConsumerState<WishlistAddForm> {
       wishlistPriority: _prio,
       volume: 0.0,
     ));
-    ref.invalidate(allCardsProvider);
     HapticFeedback.mediumImpact();
     setState(() => _saved = true);
     await Future<void>.delayed(const Duration(milliseconds: 900));

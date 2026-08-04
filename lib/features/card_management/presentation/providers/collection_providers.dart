@@ -23,7 +23,8 @@ final StateProvider<GradingCompany?> cardGradingFilterProvider =
 /// 切换 Tab / 输入关键词 / 切换评级时自动重算并驱动列表刷新。
 final Provider<AsyncValue<List<CardItem>>> filteredCollectionProvider =
     Provider<AsyncValue<List<CardItem>>>((ref) {
-  final AsyncValue<List<CardItem>> asyncCards = ref.watch(allCardsProvider);
+  final AsyncValue<List<CardItem>> asyncCards =
+      ref.watch(allCardsProvider) ?? const AsyncLoading();
   final CollectionTab tab = ref.watch(collectionTabProvider);
   final String query = ref.watch(cardSearchQueryProvider).trim().toLowerCase();
   final GradingCompany? grading = ref.watch(cardGradingFilterProvider);

@@ -11,16 +11,16 @@ import '../widgets/add_wishlist_sheet.dart';
 import '../widgets/manual_add_card_sheet.dart';
 import '../widgets/scan_add_card_dialog.dart';
 import 'card_collection_page.dart';
-import 'dashboard_page.dart';
 import 'ledger_view.dart';
 import 'profile_page.dart';
+import '../../../../features/home/presentation/pages/home_shell_page.dart';
 
 /// 应用主壳：承载四个分页 + 黑金底部导航栏 + 中间悬浮加号按钮。
 class MainScreen extends ConsumerWidget {
   const MainScreen({super.key});
 
   static const List<Widget> _pages = <Widget>[
-    DashboardPage(),
+    HomeShellPage(),
     CardCollectionPage(),
     LedgerView(),
     ProfilePage(),

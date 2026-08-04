@@ -33,20 +33,23 @@ class DefaultCardBack extends StatelessWidget {
         border: Border.all(color: AppColors.goldBorder, width: 0.5),
       ),
       child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(Icons.style_outlined,
-                size: iconSize,
-                color: AppColors.goldPrimary.withValues(alpha: 0.85)),
-            SizedBox(height: (base * 0.04).clamp(4, 12)),
-            Text('CARD COLLECTOR',
-                style: TextStyle(
-                    color: AppColors.goldPrimary.withValues(alpha: 0.85),
-                    fontSize: labelSize,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.5)),
-          ],
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(Icons.style_outlined,
+                  size: iconSize,
+                  color: AppColors.goldPrimary.withValues(alpha: 0.85)),
+              SizedBox(height: (base * 0.04).clamp(4, 12)),
+              Text('CARD COLLECTOR',
+                  style: TextStyle(
+                      color: AppColors.goldPrimary.withValues(alpha: 0.85),
+                      fontSize: labelSize,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.5)),
+            ],
+          ),
         ),
       ),
     );

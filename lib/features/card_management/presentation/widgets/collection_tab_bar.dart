@@ -19,7 +19,8 @@ class CollectionTabBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final CollectionTab tab = ref.watch(collectionTabProvider);
-    final AsyncValue<List<CardItem>> asyncAll = ref.watch(allCardsProvider);
+    final AsyncValue<List<CardItem>> asyncAll =
+        ref.watch(allCardsProvider) ?? const AsyncLoading();
     int collected = 0, wishlist = 0;
     asyncAll.whenData((List<CardItem> list) {
       collected = list.where((CardItem c) => c.isCollected).length;

@@ -6,7 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../features/card_management/data/datasources/card_local_datasource.dart';
+import '../../features/card_management/domain/repositories/card_repository_impl_drift.dart';
 import '../../features/card_management/data/models/card_item.dart';
 import '../../features/card_management/data/services/profile_export.dart';
 
@@ -49,7 +49,8 @@ class DataBackupService {
     if (result == null || result.files.single.path == null) return -1;
     final String content = await File(result.files.single.path!).readAsString();
     final List<CardItem> cards = parseBackupJson(content);
-    await CardLocalDatasource().replaceAllCards(cards);
+    // 统一走仓库双写入口：同时更新 Isar 镜像与 Drift，UI 立即可见（修复 H-3）。
+    await CardRepositoryImpl().replaceAllCards(cards);
     return cards.length;
   }
 

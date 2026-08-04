@@ -12,7 +12,6 @@ import '../../domain/repositories/card_repository.dart';
 import 'card_cover_image.dart';
 import '../helpers/card_meta.dart';
 import '../providers/profile_providers.dart';
-import '../providers/card_providers.dart';
 import 'card_detail_modal.dart';
 import 'manual_add_card_sheet.dart';
 
@@ -183,7 +182,6 @@ class CardTile extends ConsumerWidget {
       buyDate: DateTime.now(),
     );
     await ref.read(cardRepositoryProvider).saveCard(updated);
-    ref.invalidate(allCardsProvider);
     if (context.mounted) {
       GoldSnackBar.show(context, '已拔草，转入已收集');
     }
