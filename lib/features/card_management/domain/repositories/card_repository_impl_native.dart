@@ -40,6 +40,10 @@ class CardRepositoryImpl implements CardRepository {
   @override
   Stream<List<CardItem>> watchAll() => _ctrl.stream;
 
+  // 纯 Isar 实现无云端同步，无可补偿队列，保持 no-op（接口要求的方法）。
+  @override
+  Future<void> compensateUnsynced() async {}
+
   void _emit() {
     _ds.getAllCards().then(_ctrl.add);
   }

@@ -1,8 +1,8 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../utils/silent_background.dart';
 
 /// 三态主题（跟随系统 / 暗黑黑金 / 明亮香槟金）Riverpod 状态管理。
 ///
@@ -17,7 +17,9 @@ class ThemeNotifier extends Notifier<ThemeMode> {
   @override
   ThemeMode build() {
     // 同步返回默认，异步从持久化恢复（restore 后自动通知监听者刷新 UI）。
-    unawaited(_restore());
+    // 走静默护栏：SharedPreferences 平台通道异常不得逃逸成 unhandled async error，
+    // 读取失败时静默保持「跟随系统」默认值即可。
+    runSilently(_restore, tag: 'ThemeRestore');
     return ThemeMode.system;
   }
 

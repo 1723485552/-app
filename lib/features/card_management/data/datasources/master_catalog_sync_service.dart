@@ -65,6 +65,7 @@ class MasterCatalogSyncService {
     required CardItem card,
     String setName = '',
     String? localImagePath,
+    String language = 'en',
   }) async {
     if (!SupabaseConfig.isConfigured) return false;
     try {
@@ -99,49 +100,79 @@ class MasterCatalogSyncService {
           await _uploadImageIfLocal(client, masterId, localImagePath ?? card.imageUrl);
 
       if (existing == null) {
-        // 新卡：插入并标记为社区贡献。
-        await client.from(_table).insert(<String, dynamic>{
-          'id': masterId,
-          'category': category,
-          'set_name': setName,
-          'card_number': cardNumber,
-          'name': card.cardName,
-          'image_url': publicImageUrl ?? _asUrl(card.imageUrl) ?? '',
-          'grading': card.grading.name,
-          'status': 'community',
-          'contributed_by': 'local-user',
-          'created_at': DateTime.now().toIso8601String(),
-          'updated_at': DateTime.now().toIso8601String(),
-        });
-        debugPrint('[MasterCatalog] 已新增社区图鉴条目: $masterId');
+        try {
+          // 新卡：插入并标记为社区贡献。复合唯一约束 unique_card_strict_identity
+          // 会在并发上报时抛出 23505，下方捕获后回退到补充空缺逻辑，避免崩溃且仍完成贡献。
+          await client.from(_table).insert(<String, dynamic>{
+            'id': masterId,
+            'language': language,
+            'category': category,
+            'set_name': setName,
+            'card_number': cardNumber,
+            'name': card.cardName,
+            'image_url': publicImageUrl ?? _asUrl(card.imageUrl) ?? '',
+            'grading': card.grading.name,
+            'status': 'community',
+            'contributed_by': 'local-user',
+            'created_at': DateTime.now().toIso8601String(),
+            'updated_at': DateTime.now().toIso8601String(),
+          });
+          debugPrint('[MasterCatalog] 已新增社区图鉴条目: $masterId');
+        } on PostgrestException catch (e, st) {
+          if (e.code == '23505') {
+            // 并发唯一冲突：另一客户端已写入相同身份行，回退到补充空缺。
+            final Map<String, dynamic>? conflict = await client
+                .from(_table)
+                .select('id, status, name, image_url')
+                .eq('id', masterId)
+                .maybeSingle();
+            if (conflict != null) {
+              await _fillEmpty(client, masterId, card, publicImageUrl, conflict);
+            }
+          } else {
+            debugPrint('[MasterCatalog] 插入失败（已静默降级）: $e\n$st');
+            return false;
+          }
+        }
       } else {
-        // 已存在：官方验证数据不可动；社区数据仅填补空缺，绝不覆盖已有内容。
-        if (existing['status'] == 'verified') {
-          debugPrint('[MasterCatalog] $masterId 为官方验证数据，跳过补充');
-          return true;
-        }
-        final Map<String, dynamic> patch = <String, dynamic>{};
-        if (_isEmpty(existing['name']) && card.cardName.isNotEmpty) {
-          patch['name'] = card.cardName;
-        }
-        final String? candidateImage = publicImageUrl ?? _asUrl(card.imageUrl);
-        if (_isEmpty(existing['image_url']) && candidateImage != null) {
-          patch['image_url'] = candidateImage;
-        }
-        if (patch.isNotEmpty) {
-          await client.from(_table).update(patch).eq('id', masterId);
-          debugPrint('[MasterCatalog] 已补充 $masterId 空缺字段: ${patch.keys}');
-        } else {
-          debugPrint('[MasterCatalog] $masterId 无空缺可补，跳过');
-        }
+        await _fillEmpty(client, masterId, card, publicImageUrl, existing);
       }
       return true;
     } on CloudBackupConfigException {
       // 凭证未配置属预期（纯本地模式），静默降级。
+      debugPrint('[MasterCatalog] 未配置 Supabase 凭证，跳过主图鉴上报（纯本地模式）');
       return false;
-    } catch (e) {
-      debugPrint('[MasterCatalog] 上报失败（已静默降级）: $e');
+    } catch (e, st) {
+      debugPrint('[MasterCatalog] 上报失败（已静默降级）: $e\n$st');
       return false;
+    }
+  }
+
+  /// 已存在条目时，仅填补空缺字段；官方 verified 数据绝不改动（补充而非覆盖）。
+  static Future<void> _fillEmpty(
+    SupabaseClient client,
+    String masterId,
+    CardItem card,
+    String? publicImageUrl,
+    Map<String, dynamic> existing,
+  ) async {
+    if (existing['status'] == 'verified') {
+      debugPrint('[MasterCatalog] $masterId 为官方验证数据，跳过补充');
+      return;
+    }
+    final Map<String, dynamic> patch = <String, dynamic>{};
+    if (_isEmpty(existing['name']) && card.cardName.isNotEmpty) {
+      patch['name'] = card.cardName;
+    }
+    final String? candidateImage = publicImageUrl ?? _asUrl(card.imageUrl);
+    if (_isEmpty(existing['image_url']) && candidateImage != null) {
+      patch['image_url'] = candidateImage;
+    }
+    if (patch.isNotEmpty) {
+      await client.from(_table).update(patch).eq('id', masterId);
+      debugPrint('[MasterCatalog] 已补充 $masterId 空缺字段: ${patch.keys}');
+    } else {
+      debugPrint('[MasterCatalog] $masterId 无空缺可补，跳过');
     }
   }
 
@@ -177,8 +208,8 @@ class MasterCatalogSyncService {
             fileOptions: const FileOptions(upsert: true, cacheControl: '3600'),
           );
       return client.storage.from(_imageBucket).getPublicUrl(objectPath);
-    } catch (e) {
-      debugPrint('[MasterCatalog] 图片公共化失败（仅上报元数据）: $e');
+    } catch (e, st) {
+      debugPrint('[MasterCatalog] 图片公共化失败（仅上报元数据）: $e\n$st');
       return null;
     }
   }
@@ -194,7 +225,8 @@ class MasterCatalogSyncService {
     try {
       final File file = File(candidate);
       return file.existsSync() && file.lengthSync() > 0 ? candidate : null;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[MasterCatalog] 本地图片路径校验异常（按非本地文件处理）: $e');
       return null;
     }
   }

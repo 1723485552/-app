@@ -117,6 +117,24 @@ create table if not exists public.master_catalogs (
 
 create index if not exists master_catalogs_category_idx on public.master_catalogs (category);
 
+-- 严格身份唯一约束（任务二）：从物理层彻底杜绝众包重复与污染数据。
+-- 维度 = 语言(language) / 系列(set_name) / 类型(category) / 序号(card_number) / 名称(name)，
+-- 五维一致即视为同一张卡，重复上报将被唯一约束拦截（客户端以 23505 冲突优雅回退）。
+-- 复合唯一约束会自动生成对应的唯一 B-Tree 索引，无需再单独建索引。
+alter table public.master_catalogs
+  add column if not exists language text not null default 'en';
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'unique_card_strict_identity'
+  ) then
+    alter table public.master_catalogs
+      add constraint unique_card_strict_identity
+      unique (language, set_name, category, card_number, name);
+  end if;
+end $$;
+
 alter table public.master_catalogs enable row level security;
 
 -- anon 可插入社区条目（status 强制为合法值）。

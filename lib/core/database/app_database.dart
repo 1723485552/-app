@@ -17,6 +17,10 @@ part 'app_database.g.dart';
 /// 数据类命名为 [CardRow] 而非默认的 `Card`，避免与 Flutter Material 的 `Card`
 /// 组件重名冲突。
 @DataClassName('CardRow')
+@TableIndex(name: 'idx_cards_category', columns: {#category})
+@TableIndex(name: 'idx_cards_is_wishlist', columns: {#isWishlist})
+@TableIndex(name: 'idx_cards_is_synced', columns: {#isSynced})
+@TableIndex(name: 'idx_cards_set_name', columns: {#setName})
 class Cards extends Table {
   TextColumn get id => text()();
 
@@ -100,12 +104,12 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.withExecutor(super.executor);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
-  /// 数据库版本迁移策略（H-6）。
+  /// 数据库版本迁移策略。
   ///
-  /// 预留 step-by-step 迁移回调：后续加列/改表时在此按 `from` 版本递增补充，
-  /// 避免老用户升级后因 schema 不匹配而启动崩溃。当前仅有 v1 → v2 的加列迁移。
+  /// 预留 step-by-step 迁移回调：后续加列/改表/加索引时在此按 `from` 版本递增补充，
+  /// 避免老用户升级后因 schema 不匹配而启动崩溃。
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (Migrator m) async => m.createAll(),
@@ -113,9 +117,37 @@ class AppDatabase extends _$AppDatabase {
       if (from < 2) {
         await m.addColumn(cards, cards.setName);
       }
+      // v2 → v3：补齐高频过滤字段的 B-Tree 索引（任务一）。
+      // 新装用户由 @Table(indexes:) 经 createAll() 建好；老用户升级走此路径手动补齐。
+      if (from < 3) {
+        await _createIndexes(m);
+      }
       // 未来版本演进：在此按 `from` 递增补充迁移步骤。
     },
   );
+
+  /// 高频过滤/检索字段建立 B-Tree 索引，避免数千张卡时全表扫描丢帧（任务一）。
+  ///
+  /// 仅用于 v2→v3 升级路径；新装由 createAll() 依据 @Table(indexes:) 自动建好。
+  /// 使用 IF NOT EXISTS 保证幂等，多次进入迁移亦安全。
+  Future<void> _createIndexes(Migrator m) async {
+    await m.createIndex(Index(
+      'idx_cards_category',
+      'CREATE INDEX IF NOT EXISTS idx_cards_category ON cards (category)',
+    ));
+    await m.createIndex(Index(
+      'idx_cards_is_wishlist',
+      'CREATE INDEX IF NOT EXISTS idx_cards_is_wishlist ON cards (is_wishlist)',
+    ));
+    await m.createIndex(Index(
+      'idx_cards_is_synced',
+      'CREATE INDEX IF NOT EXISTS idx_cards_is_synced ON cards (is_synced)',
+    ));
+    await m.createIndex(Index(
+      'idx_cards_set_name',
+      'CREATE INDEX IF NOT EXISTS idx_cards_set_name ON cards (set_name)',
+    ));
+  }
 
   // ---------------- Cards DAO ----------------
 

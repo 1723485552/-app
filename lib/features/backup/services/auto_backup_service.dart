@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -20,12 +21,16 @@ class AutoBackupService {
   static const int _retainDays = 7;
 
   /// 启动 / 切前台时调用：超过 24h 才静默执行一次。
+  ///
+  /// 整体包在 try 内 —— [SharedPreferences.getInstance] 走平台通道，插件未就绪或
+  /// 存储异常时会抛出。该调用位于 try 之外的话，异常将绕过护栏逃逸成 unhandled
+  /// async error（调用方以 `runSilently` 后台触发，无人接手），App 启动即红屏。
   static Future<void> backupIfDue(CardRepository repo) async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    final int last = prefs.getInt(_spKey) ?? 0;
-    final int now = DateTime.now().millisecondsSinceEpoch;
-    if (last != 0 && now - last < _interval.inMilliseconds) return;
     try {
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final int last = prefs.getInt(_spKey) ?? 0;
+      final int now = DateTime.now().millisecondsSinceEpoch;
+      if (last != 0 && now - last < _interval.inMilliseconds) return;
       await _backupNow(repo);
       await prefs.setInt(_spKey, now);
     } catch (_) {
@@ -64,7 +69,9 @@ class AutoBackupService {
       if (t != null && t.isBefore(cutoff)) {
         try {
           await f.delete();
-        } catch (_) {}
+        } catch (e) {
+          debugPrint('[AutoBackup] 删除旧备份失败（可忽略）: $e');
+        }
       }
     }
   }

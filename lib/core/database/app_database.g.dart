@@ -1411,11 +1411,26 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $CardsTable cards = $CardsTable(this);
   late final $CatalogsTable catalogs = $CatalogsTable(this);
+  late final Index idxCardsCategory = Index('idx_cards_category',
+      'CREATE INDEX idx_cards_category ON cards (category)');
+  late final Index idxCardsIsWishlist = Index('idx_cards_is_wishlist',
+      'CREATE INDEX idx_cards_is_wishlist ON cards (is_wishlist)');
+  late final Index idxCardsIsSynced = Index('idx_cards_is_synced',
+      'CREATE INDEX idx_cards_is_synced ON cards (is_synced)');
+  late final Index idxCardsSetName = Index('idx_cards_set_name',
+      'CREATE INDEX idx_cards_set_name ON cards (set_name)');
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [cards, catalogs];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+        cards,
+        catalogs,
+        idxCardsCategory,
+        idxCardsIsWishlist,
+        idxCardsIsSynced,
+        idxCardsSetName
+      ];
 }
 
 typedef $$CardsTableCreateCompanionBuilder = CardsCompanion Function({

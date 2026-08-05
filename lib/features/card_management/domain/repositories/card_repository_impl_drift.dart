@@ -1,9 +1,8 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/app_database_provider.dart';
+import '../../../../core/utils/silent_background.dart';
 import '../../data/datasources/card_local_datasource_native.dart';
 import '../../data/datasources/master_catalog_sync_service.dart';
 import '../../data/datasources/supabase_card_sync.dart';
@@ -18,8 +17,11 @@ import 'card_repository.dart';
 ///    恢复」（[uploadBackup] / [restoreBackup]）完全依赖它，必须保留，否则备份功能失效；
 /// 2. 落本地 SQLite —— Drift 的 [AppDatabase.watchAllCards] 是响应式流，写入即触发
 ///    UI 重建，这是「零延迟」的来源；
-/// 3. `unawaited` 后台推送 Supabase，成功后回填 `isSynced = true`。失败静默降级，
+/// 3. 经 [runSilently] 后台推送 Supabase，成功后回填 `isSynced = true`。失败静默降级，
 ///    数据保留 `isSynced = false` 等待下次补偿，用户完全无感。
+///
+/// 所有云端动作一律走 [runSilently] 而非裸 `unawaited`：后者不捕获异常，失败会逃逸成
+/// unhandled async error（debug 红屏 / release 崩溃上报），破坏「静默降级」约定。
 ///
 /// 读取路径一律走 Drift，永不阻塞在网络上。
 class CardRepositoryImpl implements CardRepository {
@@ -29,6 +31,9 @@ class CardRepositoryImpl implements CardRepository {
 
   /// 一次性迁移句柄：保证 Isar → Drift 的搬运在整个进程内只执行一次。
   Future<void>? _migration;
+
+  /// 冷启动补偿互斥锁：防止多次冷启动 / 初始化竞态触发重复扫描。
+  bool _compensating = false;
 
   @override
   Future<List<CardItem>> getAllCards() async {
@@ -53,10 +58,10 @@ class CardRepositoryImpl implements CardRepository {
     );
     await _db.upsertCard(row);
     // 3) 后台增量同步，不阻塞返回。
-    unawaited(_pushInBackground(row));
+    runSilently(() => _pushInBackground(row), tag: 'CardSync');
     // 4) 后台众包上报：把卡牌元数据（及可选卡面图）共享到公共主图鉴，静默降级，
     //    不影响用户本地保存与 UI。
-    unawaited(_contributeToMaster(card));
+    runSilently(() => _contributeToMaster(card), tag: 'MasterCatalog');
   }
 
   @override
@@ -67,7 +72,7 @@ class CardRepositoryImpl implements CardRepository {
     await _ensureMigrated();
     await _db.deleteCardById(id.toString());
     await _mirror.deleteCard(id);
-    unawaited(_sync.deleteCard(id.toString()));
+    runSilently(() => _sync.deleteCard(id.toString()), tag: 'CardSync');
   }
 
   @override
@@ -79,7 +84,7 @@ class CardRepositoryImpl implements CardRepository {
       persisted.map((CardItem e) => CardRowMapper.toRow(e)).toList(),
     );
     // 恢复后的全量数据视为待同步，交由后台补偿推送。
-    unawaited(_pushPending());
+    runSilently(_pushPending, tag: 'CardSync');
     _migration = Future<void>.value();
   }
 
@@ -123,6 +128,47 @@ class CardRepositoryImpl implements CardRepository {
     if (!ok) return;
     for (final CardRow row in pending) {
       await _db.setSynced(row.id, true);
+    }
+  }
+
+  /// 冷启动补偿：扫描本地所有 `isSynced = false` 的卡片，后台静默重试推送。
+  ///
+  /// 同时覆盖两条云链路：
+  /// 1. 私有表 `cards` 的增量同步（批量 upsert，成功后回填 `isSynced = true`）；
+  /// 2. 公共主图鉴 `master_catalogs` 的贡献上报（[_contributeToMaster]，幂等
+  ///    insert-or-fill-empty，失败已在服务内部静默降级）。
+  ///
+  /// 以 [_compensating] 互斥，重复调用（多次冷启动 / 初始化竞态）只触发一次真实扫描，
+  /// 绝不重复上行。调用方须用 [runSilently] 包络并打 'StartupCompensation' 标签，
+  /// 本方法自身异常也被 catch 透传给护栏，仅输出带堆栈日志，不阻断 App 启动。
+  ///
+  /// 注意：补偿范围以 `isSynced` 为准——即「本次保存曾尝试上报」的卡片。若某卡私有表
+  /// 推送成功（`isSynced` 已置真）但主图鉴贡献失败，属极少数边缘，本次不补偿；这是为
+  /// 避免对上千张已同步卡牌全量重报而做的可接受的众包去重取舍，无需为此新增迁移列。
+  @override
+  Future<void> compensateUnsynced() async {
+    if (_compensating) return;
+    _compensating = true;
+    try {
+      await _ensureMigrated();
+      final List<CardRow> pending = await _db.getUnsyncedCards();
+      if (pending.isEmpty) return;
+      // 1) 私有表增量同步（批量 upsert）。
+      final bool ok = await _sync.pushCards(pending);
+      if (ok) {
+        for (final CardRow row in pending) {
+          await _db.setSynced(row.id, true);
+        }
+      }
+      // 2) 公共主图鉴贡献补偿：同一批未同步卡牌的上报若曾失败，此处重试。
+      for (final CardRow row in pending) {
+        await _contributeToMaster(CardRowMapper.toItem(row));
+      }
+    } catch (e, st) {
+      // 扫描/上行自身异常（如 DB 读取失败）不向外抛，交给 runSilently 护栏记录堆栈。
+      debugPrint('[CardRepository] 冷启动补偿扫描异常（已降级）: $e\n$st');
+    } finally {
+      _compensating = false;
     }
   }
 

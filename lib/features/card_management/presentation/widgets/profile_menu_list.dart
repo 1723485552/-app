@@ -4,7 +4,6 @@ import 'package:card_management/core/theme/gold_theme_extension.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import 'package:card_management/core/theme/theme_provider.dart';
 import '../../../../core/widgets/gold_snack_bar.dart';
 import '../../domain/enums/currency_unit.dart';
@@ -13,8 +12,10 @@ import '../../data/services/profile_service.dart';
 import '../providers/card_providers.dart';
 import '../providers/profile_providers.dart';
 import './profile_about_dialog.dart';
+import './profile_currency_dialog.dart';
 import './profile_menu_item.dart';
 import './profile_menu_section.dart';
+import './profile_privacy_dialog.dart';
 import './theme_mode_sheet.dart';
 import '../../../../features/backup/data_backup_service.dart';
 import '../../../../features/backup/confirm_danger_dialog.dart';
@@ -131,6 +132,15 @@ class _ProfileMenuListState extends ConsumerState<ProfileMenuList> {
           title: '关于与版本',
           children: <Widget>[
             ProfileMenuItem(
+              icon: Icons.privacy_tip_outlined,
+              title: '隐私与数据共建说明',
+              subtitle: '公开卡牌元数据异步共建',
+              divider: true,
+              trailing: Icon(Icons.chevron_right_outlined,
+                  color: context.gold.textInactive, size: 18),
+              onTap: () => _onPrivacy(context),
+            ),
+            ProfileMenuItem(
               icon: Icons.info_outline,
               title: '关于与版本',
               subtitle: '规范说明 · $_versionLabel',
@@ -182,48 +192,9 @@ class _ProfileMenuListState extends ConsumerState<ProfileMenuList> {
   }
 
   Future<void> _onCurrency(BuildContext context) async {
-    final CurrencyUnit? pick = await showDialog<CurrencyUnit>(
-      context: context,
-      builder: (BuildContext ctx) {
-        final CurrencyUnit cur = ref.read(profileCurrencyProvider);
-        return SimpleDialog(
-          backgroundColor: context.gold.surfaceDark,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: AppColors.goldBorder, width: 0.5),
-          ),
-          title: Text('货币单位',
-              style: TextStyle(
-                  color: context.gold.textWhite, fontSize: 16, fontWeight: FontWeight.w600)),
-          children: <Widget>[
-            for (final CurrencyUnit u in CurrencyUnit.values)
-              SimpleDialogOption(
-                onPressed: () => Navigator.of(ctx).pop(u),
-                child: Row(
-                  children: <Widget>[
-                    Icon(
-                      u == cur ? Icons.check_circle_outline : Icons.circle_outlined,
-                      color: u == cur
-                          ? AppColors.goldPrimary
-                          : context.gold.textInactive,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      currencyLabel(u),
-                      style: TextStyle(
-                        color: u == cur
-                            ? AppColors.goldPrimary
-                            : context.gold.textWhite,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        );
-      },
+    final CurrencyUnit? pick = await showCurrencyPickerDialog(
+      context,
+      ref.read(profileCurrencyProvider),
     );
     if (pick != null) ref.read(profileCurrencyProvider.notifier).state = pick;
   }
@@ -232,6 +203,14 @@ class _ProfileMenuListState extends ConsumerState<ProfileMenuList> {
     showDialog<void>(
       context: context,
       builder: (_) => ProfileAboutDialog(version: _versionLabel),
+    );
+  }
+
+  /// 隐私与数据共建声明 —— 应用商店审核要求的「数据收集与共享」应用内披露。
+  void _onPrivacy(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => const ProfilePrivacyDialog(),
     );
   }
 

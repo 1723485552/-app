@@ -26,4 +26,9 @@ abstract class CardRepository {
 
   /// 监听全量卡牌变化流（实时联动 UI）。
   Stream<List<CardItem>> watchAll();
+
+  /// 冷启动补偿：扫描本地所有未同步（`isSynced = false`）卡片，后台静默重试推送
+  /// （私有表增量同步 + 公共主图鉴贡献）。幂等且防并发，由调用方以 [runSilently]
+  /// 包络并打 'StartupCompensation' 标签；异常被护栏捕获仅输出带堆栈日志，不阻断启动。
+  Future<void> compensateUnsynced();
 }

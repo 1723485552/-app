@@ -10,6 +10,8 @@ import '../../../../services/cloud_sync_service.dart';
 /// 设计红线：
 /// 1. **绝不抛异常**——所有方法失败时返回 `false`。同步是本地写入之后的补充动作，
 ///    离线 / 未配置凭证 / 表不存在都只能静默降级，不得影响本地数据与 UI；
+///    为此设备 ID 读取（走 SharedPreferences 平台通道，可能抛异常）也必须放在
+///    [_guard] **内部**，否则该异常会绕过护栏逃逸成 unhandled async error；
 /// 2. 未配置 `--dart-define=SUPABASE_URL/ANON_KEY` 时直接判定不可用，不产生网络请求；
 /// 3. 与既有整库文件备份（[uploadBackup]）互不干扰，二者共用同一份 Supabase 初始化。
 class SupabaseCardSync {
@@ -17,9 +19,9 @@ class SupabaseCardSync {
   static const String tableName = 'cards';
 
   /// 上行单张卡牌（存在则更新）。成功返回 true。
-  Future<bool> pushCard(CardRow row) async {
-    final String userId = await DeviceIdentityService.getDeviceId();
+  Future<bool> pushCard(CardRow row) {
     return _guard(() async {
+      final String userId = await DeviceIdentityService.getDeviceId();
       await Supabase.instance.client
           .from(tableName)
           .upsert(_toRemoteJson(row, userId), onConflict: 'id');
@@ -27,10 +29,10 @@ class SupabaseCardSync {
   }
 
   /// 批量上行（用于补偿未同步队列）。
-  Future<bool> pushCards(List<CardRow> rows) async {
-    if (rows.isEmpty) return true;
-    final String userId = await DeviceIdentityService.getDeviceId();
+  Future<bool> pushCards(List<CardRow> rows) {
+    if (rows.isEmpty) return Future<bool>.value(true);
     return _guard(() async {
+      final String userId = await DeviceIdentityService.getDeviceId();
       await Supabase.instance.client
           .from(tableName)
           .upsert(rows.map((CardRow r) => _toRemoteJson(r, userId)).toList(),
@@ -39,9 +41,9 @@ class SupabaseCardSync {
   }
 
   /// 删除云端记录。
-  Future<bool> deleteCard(String id) async {
-    final String userId = await DeviceIdentityService.getDeviceId();
+  Future<bool> deleteCard(String id) {
     return _guard(() async {
+      final String userId = await DeviceIdentityService.getDeviceId();
       await Supabase.instance.client
           .from(tableName)
           .delete()
@@ -58,9 +60,10 @@ class SupabaseCardSync {
       return true;
     } on CloudBackupConfigException {
       // 凭证未配置属预期状态（纯本地模式），不打扰用户、不刷日志噪音。
+      debugPrint('[SupabaseCardSync] 未配置 Supabase 凭证，跳过云端同步（纯本地模式）');
       return false;
-    } catch (e) {
-      debugPrint('[SupabaseCardSync] 同步失败（已降级为纯本地）: $e');
+    } catch (e, st) {
+      debugPrint('[SupabaseCardSync] 同步失败（已降级为纯本地）: $e\n$st');
       return false;
     }
   }

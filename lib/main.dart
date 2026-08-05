@@ -1,10 +1,11 @@
-import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/theme/app_theme.dart';
+import 'core/utils/silent_background.dart';
+import 'services/cloud_sync_service.dart';
 import 'features/backup/services/auto_backup_service.dart';
 import 'features/card_management/data/datasources/card_local_datasource.dart';
 import 'features/card_management/domain/repositories/card_repository.dart';
@@ -77,8 +78,26 @@ class _CardManagementAppState extends ConsumerState<CardManagementApp>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // 静默本地自动备份：启动后择机执行（24h 节流在内部处理，失败不影响主流程）。
-    unawaited(AutoBackupService.backupIfDue(ref.read(cardRepositoryProvider)));
+    // 首帧渲染后再静默触发后台任务，绝不阻塞冷启动首帧。
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // 统一初始化 Supabase（凭证已配好时静默就绪，未配置则降级为纯本地）。
+      // 必须在补偿/备份/同步任务之前执行，否则后续代码直接
+      // Supabase.instance.client 会报 "You must initialize"。
+      runSilently(
+        () => ensureSupabaseInitialized(),
+        tag: 'SupabaseInit',
+      );
+      // 静默本地自动备份：24h 节流在内部处理，失败不影响主流程。
+      runSilently(
+        () => AutoBackupService.backupIfDue(ref.read(cardRepositoryProvider)),
+        tag: 'AutoBackup',
+      );
+      // 冷启动补偿：把离线/弱网下保存失败未同步的卡片在后台重试推送。
+      runSilently(
+        () => ref.read(cardRepositoryProvider).compensateUnsynced(),
+        tag: 'StartupCompensation',
+      );
+    });
   }
 
   @override
